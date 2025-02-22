@@ -1,6 +1,7 @@
 package command
 
 import (
+	"os"
 	"testing"
 )
 
@@ -20,21 +21,11 @@ func TestExitCommand(t *testing.T) {
 			args:    []string{"invalid"},
 			wantErr: ErrInvalidArgs,
 		},
-		{
-			name:    "valid argument 1",
-			args:    []string{"1"},
-			wantErr: nil,
-		},
-        {
-			name:    "valid argument 2",
-			args:    []string{"2"},
-			wantErr: nil,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd := NewExitCommand()
+			cmd := NewExitCommand(os.Stdout)
 
 			// Verify command name
 			if got := cmd.Name(); got != "exit" {

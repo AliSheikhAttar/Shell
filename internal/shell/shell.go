@@ -2,15 +2,26 @@ package shell
 
 import (
 	"asa/shell/internal/command"
+	"asa/shell/utils"
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"strings"
+)
+
+var (
+	ErrCommandNotSupported = errors.New("command not found")
 )
 
 type Shell struct {
 	reader   *bufio.Reader
-	commands map[string]command.Command // Changed from exitCmd to commands map
+	commands map[string]command.Command
+	stdin    io.Reader
+	stdout   io.Writer
+	stderr   io.Writer
 }
 
 // New creates a new shell instance
@@ -18,13 +29,82 @@ func New() *Shell {
 	sh := &Shell{
 		reader:   bufio.NewReader(os.Stdin),
 		commands: make(map[string]command.Command),
+		stdin:    os.Stdin,  // Default to standard input
+		stdout:   os.Stdout, // Default to standard output
+		stderr:   os.Stderr, // Default to standard error
 	}
+	// Define built-in commands
+	builtins := []string{"exit", "echo", "cat", "type", "cd"} // Add all built-in commands here
 
 	// Register the exit command
-	exitCmd := command.NewExitCommand()
-	sh.commands[exitCmd.Name()] = exitCmd
+	exitCmd := command.NewExitCommand(sh.stdout)
+	sh.registerCommand(exitCmd)
+
+	// Register the echo command
+	echoCmd := command.NewEchoCommand(sh.stdout)
+	sh.registerCommand(echoCmd)
+
+	// Register the cat command
+	catCmd := command.NewCatCommand(sh.stdout)
+	sh.registerCommand(catCmd)
+
+	// Register the type command
+	typeCmd := command.NewTypeCommand(builtins, sh.stdout)
+	sh.registerCommand(typeCmd)
+
+	// Register the pwd command
+	pwdCmd := command.NewPwdCommand(sh.stdout)
+	sh.registerCommand(pwdCmd)
 
 	return sh
+}
+
+func (s *Shell) registerCommand(cmd command.Command) {
+	s.commands[cmd.Name()] = cmd
+}
+
+func (s *Shell) Execute(input string) error {
+	// Split input into command and arguments
+	args := strings.Fields(input)
+	if len(args) == 0 {
+		return nil
+	}
+	cmdName, cmdArgs := s.parseCommand(input)
+
+	// Check if it's a built-in command
+	if cmd, ok := s.commands[cmdName]; ok {
+		return cmd.Execute(cmdArgs)
+	}
+
+	// If not a built-in command, find the executable path and execute it
+	return s.executeSystemCommand(cmdName, cmdArgs)
+}
+
+func (s *Shell) executeSystemCommand(name string, args []string) error {
+	// Use type command to find the executable path
+	execPath, err := utils.FindCommand(name)
+	if err != nil {
+		return err
+	}
+	if utils.HasPrefix(execPath, "$builtin") {
+		execPath = strings.Split(execPath, ":")[1] // seperate builtin command
+	}
+
+	// Create and execute the system command with the full path
+	cmd := exec.Command(execPath, args...)
+
+	// Use Shell's IO streams instead of os package defaults
+	cmd.Stdin = s.stdin
+	cmd.Stdout = s.stdout
+	cmd.Stderr = s.stderr
+
+	// Execute the command
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to execute %s: %v", name, err)
+	}
+
+	return nil
 }
 
 // Start begins the shell's read-eval-print loop
@@ -47,14 +127,21 @@ func (s *Shell) Start() error {
 
 		// Process the command (for now, just echo it back)
 		if err := s.executeCommand(input); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			fmt.Fprintf(s.stderr, "%s: %v\n", input, err)
+			if err == ErrCommandNotSupported {
+				fmt.Println()
+				fmt.Fprintln(s.stdout, "List of supported builtin commands are as followings: ")
+				for key := range s.commands {
+					fmt.Fprintln(s.stdout, key)
+				}
+			}
 		}
 	}
 }
 
 // printPrompt displays the shell prompt
 func (s *Shell) printPrompt() error {
-	_, err := fmt.Print("$ ")
+	_, err := fmt.Fprint(s.stdout, "$ ")
 	return err
 }
 
@@ -76,14 +163,15 @@ func (s *Shell) executeCommand(input string) error {
 	if command, exists := s.commands[cmd]; exists {
 		err := command.Execute(args)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			return nil
+			return err
 		}
 		return nil
 	}
 
-	// For now, echo other commands
-	fmt.Println("You entered:", input)
+	if err := s.executeSystemCommand(cmd, args); err != nil {
+		return ErrCommandNotSupported
+	}
+
 	return nil
 }
 
@@ -95,5 +183,3 @@ func (s *Shell) parseCommand(input string) (string, []string) {
 	}
 	return fields[0], fields[1:]
 }
-
-// ... rest of the shell.go implementation remains the same ...

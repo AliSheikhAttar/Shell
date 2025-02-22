@@ -2,16 +2,21 @@ package command
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 )
 
 // ExitCommand implements the 'exit' built-in command
-type ExitCommand struct{}
+type ExitCommand struct {
+	stdout io.Writer
+}
 
 // NewExitCommand creates a new exit command
-func NewExitCommand() *ExitCommand {
-	return &ExitCommand{}
+func NewExitCommand(stdout io.Writer) *ExitCommand {
+	return &ExitCommand{
+		stdout: stdout,
+	}
 }
 
 // Name returns the name of the command
@@ -23,7 +28,7 @@ func (c *ExitCommand) Name() string {
 func (c *ExitCommand) Execute(args []string) error {
 	switch len(args) {
 	case 0:
-		fmt.Println("exit status 0")
+		fmt.Fprintln(c.stdout, "exit status 0")
 		os.Exit(0)
 
 	case 1:
@@ -31,7 +36,7 @@ func (c *ExitCommand) Execute(args []string) error {
 		if err != nil {
 			return ErrInvalidArgs
 		}
-		fmt.Printf("exit status %d\n", status)
+		fmt.Fprintln(c.stdout, "exit status ", status)
 		os.Exit(0)
 	default:
 		return ErrTooManyArgs

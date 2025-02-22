@@ -1,8 +1,13 @@
 package shell
 
 import (
+	"asa/shell/internal/command"
 	"bufio"
 	"bytes"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -105,4 +110,338 @@ func TestParseCommand(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSystemCommandExecution(t *testing.T) {
+	// Create temporary test directory
+	tmpDir := t.TempDir()
+
+	// Create a test bash script
+	shScriptPath := filepath.Join(tmpDir, "test-script.sh")
+	shScriptContent := `#!/bin/sh
+		echo "Hello from test script"`
+	if err := os.WriteFile(shScriptPath, []byte(shScriptContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a test python script
+	pyScriptPath := filepath.Join(tmpDir, "test-script.py")
+	pyScriptContent := `print("Hello from test script")`
+	if err := os.WriteFile(pyScriptPath, []byte(pyScriptContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Add temporary directory to PATH
+	originalPath := os.Getenv("PATH")
+	os.Setenv("PATH", tmpDir+":"+originalPath)
+	defer os.Setenv("PATH", originalPath)
+
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{
+			name:    "execute built-in command",
+			input:   "echo hello",
+			wantErr: false,
+		},
+		{
+			name:    "execute system command",
+			input:   "test-script.sh",
+			wantErr: false,
+		},
+		{
+			name:    "execute system command with arguments",
+			input:   fmt.Sprintf("python %s/test-script.py", tmpDir),
+			wantErr: false,
+		},
+		{
+			name:    "execute non-existent command",
+			input:   "nonexistentcommand",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sh := New()
+			err := sh.Execute(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestShell_SystemCommandExecution(t *testing.T) {
+	// Create temporary test directory and scripts
+	tmpDir := t.TempDir()
+	setupTestScripts(t, tmpDir)
+
+	// Add temporary directory to PATH
+	originalPath := os.Getenv("PATH")
+	os.Setenv("PATH", tmpDir+":"+originalPath)
+	defer os.Setenv("PATH", originalPath)
+
+	tests := []struct {
+		name    string
+		input   string
+		wantOut string
+		wantErr bool
+	}{
+		{
+			name:    "execute simple script",
+			input:   "test-script.sh",
+			wantOut: "Hello from test script\n",
+			wantErr: false,
+		},
+		{
+			name:    "execute script with arguments",
+			input:   "echo-args.sh arg1 arg2",
+			wantOut: "Arguments: arg1 arg2\n",
+			wantErr: false,
+		},
+		{
+			name:    "execute failing script",
+			input:   "fail-script.sh",
+			wantOut: "This script fails\n",
+			wantErr: true,
+		},
+		{
+			name:    "execute script with env variables",
+			input:   "env-script.sh",
+			wantOut: "TEST_VAR=test_value\n",
+			wantErr: false,
+		},
+		{
+			name:    "execute nonexistent command",
+			input:   "nonexistent-command",
+			wantOut: "",
+			wantErr: true,
+		},
+		{
+			name:    "execute command with full path",
+			input:   "/usr/bin/echo test",
+			wantOut: "test\n",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create shell instance with captured output
+			stdout := &bytes.Buffer{}
+			stderr := &bytes.Buffer{}
+			sh := createTestShell(stdout, stderr)
+
+			// Set test environment variable if needed
+			if strings.Contains(tt.input, "env-script.sh") {
+				os.Setenv("TEST_VAR", "test_value")
+				defer os.Unsetenv("TEST_VAR")
+			}
+
+			// Execute command
+			err := sh.Execute(tt.input)
+
+			// Check error condition
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Check output
+			if tt.wantOut != "" {
+				gotOut := stdout.String()
+				if gotOut != tt.wantOut {
+					t.Errorf("Shell.Execute() output = %q, want %q", gotOut, tt.wantOut)
+				}
+			}
+		})
+	}
+}
+func TestShell_CommandWithPipes(t *testing.T) {
+    tests := []struct {
+        name     string
+        input    string
+        stdin    string
+        wantOut  string
+        wantErr  bool
+    }{
+        {
+            name:     "cat command with stdin",
+            input:    "cat",
+            stdin:    "test demo\n",
+            wantOut:  "test demo\n",
+            wantErr:  false,
+        },
+        {
+            name:     "cat command with multiple lines",
+            input:    "cat",
+            stdin:    "line1\nline2\n",
+            wantOut:  "line1\nline2\n",
+            wantErr:  false,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            stdout := &bytes.Buffer{}
+            stdin := strings.NewReader(tt.stdin)
+            sh := createTestShellWithStdin(stdin, stdout, nil)
+
+            err := sh.executeSystemCommand(tt.input, []string{})
+            if (err != nil) != tt.wantErr {
+                t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+                return
+            }
+			got := stdout.String();
+            if  got != tt.wantOut {
+                t.Errorf("Shell.Execute() output = %q, want %q", got, tt.wantOut)
+            }
+        })
+    }
+}
+
+
+
+func TestShell_ExecutablePermissions(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a non-executable script
+	nonExecPath := filepath.Join(tmpDir, "non-executable.sh")
+	err := os.WriteFile(nonExecPath, []byte("#!/bin/sh\necho test\n"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Test executing non-executable file
+	stdout := &bytes.Buffer{}
+	sh := createTestShell(stdout, nil)
+	err = sh.Execute(nonExecPath)
+	if err == nil {
+		t.Error("Shell.Execute() should fail for non-executable file")
+	}
+}
+
+// Helper functions
+
+func setupTestScripts(t *testing.T, tmpDir string) {
+	scripts := map[string]string{
+		"test-script.sh": `#!/bin/sh
+echo "Hello from test script"
+`,
+		"echo-args.sh": `#!/bin/sh
+echo "Arguments: $@"
+`,
+		"fail-script.sh": `#!/bin/sh
+echo "This script fails"
+exit 1
+`,
+		"env-script.sh": `#!/bin/sh
+echo "TEST_VAR=$TEST_VAR"
+`,
+	}
+
+	for name, content := range scripts {
+		path := filepath.Join(tmpDir, name)
+		err := os.WriteFile(path, []byte(content), 0755)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func createTestShell(stdout, stderr io.Writer) *Shell {
+	sh := New()
+	// Set custom stdout/stderr for testing
+	if stdout != nil {
+		sh.stdout = stdout
+	}
+	if stderr != nil {
+		sh.stderr = stderr
+	}
+	return sh
+}
+func createTestShellWithStdin(stdin io.Reader, stdout, stderr io.Writer) *Shell {
+    sh := New()
+    if stdin != nil {
+        sh.stdin = stdin
+        sh.reader = bufio.NewReader(stdin) // Make sure to update the reader too
+    }
+    if stdout != nil {
+        sh.stdout = stdout
+    }
+    if stderr != nil {
+        sh.stderr = stderr
+    }
+    return sh
+}
+
+// TestHelperProcess isn't a real test - it's used as a helper process for mocking commands
+func TestHelperProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	defer os.Exit(0)
+
+	args := os.Args
+	for len(args) > 0 {
+		if args[0] == "--" {
+			args = args[1:]
+			break
+		}
+		args = args[1:]
+	}
+	if len(args) == 0 {
+		os.Exit(1)
+	}
+
+	cmd, args := args[0], args[1:]
+	switch cmd {
+	case "echo":
+		fmt.Println(strings.Join(args, " "))
+	case "cat":
+		io.Copy(os.Stdout, os.Stdin)
+	default:
+		os.Exit(1)
+	}
+}
+
+
+// shell/shell_test.go
+
+func TestShell_PwdCommand(t *testing.T) {
+    // Create a temporary directory
+    tmpDir, err := os.MkdirTemp("", "shell-pwd-test-*")
+    if err != nil {
+        t.Fatalf("Failed to create temp directory: %v", err)
+    }
+    defer os.RemoveAll(tmpDir)
+
+    // Change to the temporary directory
+    originalDir, err := os.Getwd()
+    if err != nil {
+        t.Fatalf("Failed to get current directory: %v", err)
+    }
+    defer os.Chdir(originalDir)
+
+    err = os.Chdir(tmpDir)
+    if err != nil {
+        t.Fatalf("Failed to change directory: %v", err)
+    }
+
+    stdout := &bytes.Buffer{}
+    sh := createTestShellWithStdin(nil, stdout, nil)
+	sh.registerCommand(command.NewPwdCommand(sh.stdout))
+    err = sh.Execute("pwd")
+    if err != nil {
+        t.Errorf("Shell.Execute() error = %v", err)
+        return
+    }
+
+    got := strings.TrimSpace(stdout.String())
+    if got != tmpDir {
+        t.Errorf("pwd command output = %v, want %v", got, tmpDir)
+    }
 }

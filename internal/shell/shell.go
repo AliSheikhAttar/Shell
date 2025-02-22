@@ -34,6 +34,7 @@ func (s *Shell) Start() error {
 			return err
 		}
 
+		// read inpug line
 		input, err := s.readInput()
 		if err != nil {
 			return err
@@ -53,7 +54,7 @@ func (s *Shell) Start() error {
 
 // printPrompt displays the shell prompt
 func (s *Shell) printPrompt() error {
-	_, err := fmt.Print("shell> ")
+	_, err := fmt.Print("$ ")
 	return err
 }
 

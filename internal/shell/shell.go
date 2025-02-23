@@ -60,7 +60,8 @@ func New() *Shell {
 	cdCmd := command.NewCDCommand()
 	sh.commands[cdCmd.Name()] = cdCmd
 
-
+	lsCmd := command.NewLSCommand()
+	sh.commands[lsCmd.Name()] = lsCmd
 
 	return sh
 }

@@ -1,8 +1,13 @@
 package command
 
 import (
-    "os"
-    "path/filepath"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
+)
+var (
+    ErrNoFileDir = errors.New("no such file or directory")
 )
 
 // CDCommand implements the 'cd' built-in command
@@ -19,7 +24,7 @@ func (c *CDCommand) Name() string {
 }
 
 // Execute handles the cd command execution
-func (c *CDCommand) Execute(args []string) error {
+func (c *CDCommand) Execute(args []string, stdout io.Writer) error {
     var dir string
     var err error
 
@@ -57,7 +62,7 @@ func (c *CDCommand) Execute(args []string) error {
 
     // Try to change directory
     if err := os.Chdir(dir); err != nil {
-        return err
+        return ErrNoFileDir
     }
 
     return nil

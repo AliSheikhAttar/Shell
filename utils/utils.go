@@ -11,6 +11,7 @@ import (
 var (
 	ErrCommandNotFound      = errors.New("command not found")
 	ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
+	ErrPwdWentWrong         = errors.New("Something went wrong while trying to identify current dir")
 )
 
 func FindCommand(cmd string) (string, error) {
@@ -52,10 +53,40 @@ func HasSuffix(s string, suffix string) bool {
 	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
 }
 
+func HandleAdress(baseAddr string, currentDir string) string {
+	cleanBaseAddr := strings.Trim(baseAddr, "\n")
+	cleanCurrentDir := strings.Trim(currentDir, "\n")
+
+	if HasPrefix(cleanCurrentDir, cleanBaseAddr) {
+		if cleanBaseAddr == cleanCurrentDir {
+			return "~"
+		}
+		return "~" + cleanCurrentDir[len(cleanBaseAddr):]
+	}
+	return cleanCurrentDir
+}
+
 func isExecutable(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
 		return false
 	}
 	return !info.IsDir() && (info.Mode()&0111 != 0)
+}
+
+func IsValidDirectory(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
+}
+
+func CurrentPwd() (string, error) {
+	if pwd, err := filepath.Abs("."); pwd != "" && err == nil {
+		if IsValidDirectory(pwd) {
+			return filepath.Clean(pwd), nil
+		}
+	}
+	return "", ErrPwdWentWrong
 }

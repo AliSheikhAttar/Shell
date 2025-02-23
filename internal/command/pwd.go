@@ -1,6 +1,7 @@
 package command
 
 import (
+	"asa/shell/utils"
 	"fmt"
 	"io"
 	"os"
@@ -30,13 +31,13 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) {
 
 	// Try to resolve using filepath operations --> cross-compile
 	if pwd, err := filepath.Abs("."); pwd != "" && err == nil {
-		if isValidDirectory(pwd) {
+		if utils.IsValidDirectory(pwd) {
 			return filepath.Clean(pwd), nil
 		}
 	}
 	// Try PWD environment variable first
 	if pwd := os.Getenv("PWD"); pwd != "" {
-		if isValidDirectory(pwd) {
+		if utils.IsValidDirectory(pwd) {
 			return filepath.Clean(pwd), nil
 		}
 	}
@@ -44,7 +45,7 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) {
 	// Try /proc/self/cwd on Linux
 	if runtime.GOOS == "linux" {
 		if pwd, err := os.Readlink("/proc/self/cwd"); err == nil {
-			if isValidDirectory(pwd) {
+			if utils.IsValidDirectory(pwd) {
 				return filepath.Clean(pwd), nil
 			}
 		}
@@ -52,13 +53,6 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) {
 	return "", nil
 }
 
-func isValidDirectory(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
-}
 
 func (c *PwdCommand) Name() string {
 	return "pwd"

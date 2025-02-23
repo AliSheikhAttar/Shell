@@ -4,6 +4,7 @@ import (
 	"asa/shell/internal/command"
 	"asa/shell/utils"
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,7 @@ var (
 type Shell struct {
 	reader   *bufio.Reader
 	commands map[string]command.Command
+	rootDir  string
 	stdin    io.Reader
 	stdout   io.Writer
 	stderr   io.Writer
@@ -58,9 +60,11 @@ func New() *Shell {
 
 	// Register the cd command
 	cdCmd := command.NewCDCommand()
-	sh.commands[cdCmd.Name()] = cdCmd
+	sh.registerCommand(cdCmd)
 
-
+	stdout := &bytes.Buffer{}
+	sh.commands["pwd"].Execute([]string{}, stdout)
+	sh.rootDir = stdout.String()
 
 	return sh
 }
@@ -68,7 +72,6 @@ func New() *Shell {
 func (s *Shell) registerCommand(cmd command.Command) {
 	s.commands[cmd.Name()] = cmd
 }
-
 
 // Start begins the shell's read-eval-print loop
 func (s *Shell) Start() error {
@@ -131,7 +134,13 @@ func (s *Shell) executeSystemCommand(name string, args []string) error {
 
 // printPrompt displays the shell prompt
 func (s *Shell) printPrompt() error {
-	_, err := fmt.Fprint(s.stdout, "$ ")
+	currentDir, err := utils.CurrentPwd()
+	if err != nil {
+		return err
+	}
+	addr := utils.HandleAdress(s.rootDir, currentDir)
+
+	_, err = fmt.Fprintf(s.stdout, "%s$ ", addr)
 	return err
 }
 
@@ -158,9 +167,9 @@ func (s *Shell) executeCommand(input string) error {
 		return nil
 	}
 
-	if err := s.executeSystemCommand(cmd, args); err != nil {
-		return ErrCommandNotSupported
-	}
+	// if err := s.executeSystemCommand(cmd, args); err != nil {
+	// 	return ErrCommandNotSupported
+	// }
 
 	return nil
 }

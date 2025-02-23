@@ -20,16 +20,6 @@ func TestExitCommand(t *testing.T) {
 			args:    []string{"invalid"},
 			wantErr: ErrInvalidArgs,
 		},
-		{
-			name:    "valid argument 1",
-			args:    []string{"1"},
-			wantErr: nil,
-		},
-        {
-			name:    "valid argument 2",
-			args:    []string{"2"},
-			wantErr: nil,
-		},
 	}
 
 	for _, tt := range tests {

@@ -1,6 +1,9 @@
 package command
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
 var (
     ErrTooManyArgs = errors.New("too many arguments")
@@ -9,6 +12,6 @@ var (
 
 // Command represents a shell command
 type Command interface {
-    Execute(args []string) error
+    Execute(args []string, stdout io.Writer) error
     Name() string
 }

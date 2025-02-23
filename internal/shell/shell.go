@@ -37,23 +37,23 @@ func New() *Shell {
 	builtins := []string{"exit", "echo", "cat", "type", "cd"} // Add all built-in commands here
 
 	// Register the exit command
-	exitCmd := command.NewExitCommand(sh.stdout)
+	exitCmd := command.NewExitCommand()
 	sh.registerCommand(exitCmd)
 
 	// Register the echo command
-	echoCmd := command.NewEchoCommand(sh.stdout)
+	echoCmd := command.NewEchoCommand()
 	sh.registerCommand(echoCmd)
 
 	// Register the cat command
-	catCmd := command.NewCatCommand(sh.stdout)
+	catCmd := command.NewCatCommand()
 	sh.registerCommand(catCmd)
 
 	// Register the type command
-	typeCmd := command.NewTypeCommand(builtins, sh.stdout)
+	typeCmd := command.NewTypeCommand(builtins)
 	sh.registerCommand(typeCmd)
 
 	// Register the pwd command
-	pwdCmd := command.NewPwdCommand(sh.stdout)
+	pwdCmd := command.NewPwdCommand()
 	sh.registerCommand(pwdCmd)
 
 	return sh
@@ -63,49 +63,6 @@ func (s *Shell) registerCommand(cmd command.Command) {
 	s.commands[cmd.Name()] = cmd
 }
 
-func (s *Shell) Execute(input string) error {
-	// Split input into command and arguments
-	args := strings.Fields(input)
-	if len(args) == 0 {
-		return nil
-	}
-	cmdName, cmdArgs := s.parseCommand(input)
-
-	// Check if it's a built-in command
-	if cmd, ok := s.commands[cmdName]; ok {
-		return cmd.Execute(cmdArgs)
-	}
-
-	// If not a built-in command, find the executable path and execute it
-	return s.executeSystemCommand(cmdName, cmdArgs)
-}
-
-func (s *Shell) executeSystemCommand(name string, args []string) error {
-	// Use type command to find the executable path
-	execPath, err := utils.FindCommand(name)
-	if err != nil {
-		return err
-	}
-	if utils.HasPrefix(execPath, "$builtin") {
-		execPath = strings.Split(execPath, ":")[1] // seperate builtin command
-	}
-
-	// Create and execute the system command with the full path
-	cmd := exec.Command(execPath, args...)
-
-	// Use Shell's IO streams instead of os package defaults
-	cmd.Stdin = s.stdin
-	cmd.Stdout = s.stdout
-	cmd.Stderr = s.stderr
-
-	// Execute the command
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to execute %s: %v", name, err)
-	}
-
-	return nil
-}
 
 // Start begins the shell's read-eval-print loop
 func (s *Shell) Start() error {
@@ -139,6 +96,33 @@ func (s *Shell) Start() error {
 	}
 }
 
+func (s *Shell) executeSystemCommand(name string, args []string) error {
+	// Use type command to find the executable path
+	execPath, err := utils.FindCommand(name)
+	if err != nil {
+		return err
+	}
+	if utils.HasPrefix(execPath, "$builtin") {
+		execPath = strings.Split(execPath, ":")[1] // seperate builtin command
+	}
+
+	// Create and execute the system command with the full path
+	cmd := exec.Command(execPath, args...)
+
+	// Use Shell's IO streams instead of os package defaults
+	cmd.Stdin = s.stdin
+	cmd.Stdout = s.stdout
+	cmd.Stderr = s.stderr
+
+	// Execute the command
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to execute %s: %v", name, err)
+	}
+
+	return nil
+}
+
 // printPrompt displays the shell prompt
 func (s *Shell) printPrompt() error {
 	_, err := fmt.Fprint(s.stdout, "$ ")
@@ -161,7 +145,7 @@ func (s *Shell) executeCommand(input string) error {
 	cmd, args := s.parseCommand(input)
 
 	if command, exists := s.commands[cmd]; exists {
-		err := command.Execute(args)
+		err := command.Execute(args, s.stdout)
 		if err != nil {
 			return err
 		}

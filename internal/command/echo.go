@@ -8,23 +8,19 @@ import (
 	"strings"
 )
 
-type EchoCommand struct{
-	stdout io.Writer
-}
+type EchoCommand struct{}
 
-func NewEchoCommand(stdout io.Writer) *EchoCommand {
-	return &EchoCommand{
-		stdout: stdout,
-	}
+func NewEchoCommand() *EchoCommand {
+	return &EchoCommand{}
 }
 
 func (c *EchoCommand) Name() string {
 	return "echo"
 }
 
-func (c *EchoCommand) Execute(args []string) error {
+func (c *EchoCommand) Execute(args []string, stdout io.Writer) error {
 	output := expandArgs(args)
-	fmt.Fprintln(c.stdout, output)
+	fmt.Fprintln(stdout, output)
 	return nil
 }
 

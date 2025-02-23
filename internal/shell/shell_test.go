@@ -166,9 +166,9 @@ func TestSystemCommandExecution(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sh := New()
-			err := sh.Execute(tt.input)
+			err := sh.executeCommand(tt.input)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -242,11 +242,11 @@ func TestShell_SystemCommandExecution(t *testing.T) {
 			}
 
 			// Execute command
-			err := sh.Execute(tt.input)
+			err := sh.executeCommand(tt.input)
 
 			// Check error condition
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
@@ -254,7 +254,7 @@ func TestShell_SystemCommandExecution(t *testing.T) {
 			if tt.wantOut != "" {
 				gotOut := stdout.String()
 				if gotOut != tt.wantOut {
-					t.Errorf("Shell.Execute() output = %q, want %q", gotOut, tt.wantOut)
+					t.Errorf("Shell.executeCommand() output = %q, want %q", gotOut, tt.wantOut)
 				}
 			}
 		})
@@ -292,12 +292,12 @@ func TestShell_CommandWithPipes(t *testing.T) {
 
             err := sh.executeSystemCommand(tt.input, []string{})
             if (err != nil) != tt.wantErr {
-                t.Errorf("Shell.Execute() error = %v, wantErr %v", err, tt.wantErr)
+                t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
                 return
             }
 			got := stdout.String();
             if  got != tt.wantOut {
-                t.Errorf("Shell.Execute() output = %q, want %q", got, tt.wantOut)
+                t.Errorf("Shell.executeCommand() output = %q, want %q", got, tt.wantOut)
             }
         })
     }
@@ -318,9 +318,9 @@ func TestShell_ExecutablePermissions(t *testing.T) {
 	// Test executing non-executable file
 	stdout := &bytes.Buffer{}
 	sh := createTestShell(stdout, nil)
-	err = sh.Execute(nonExecPath)
+	err = sh.executeCommand(nonExecPath)
 	if err == nil {
-		t.Error("Shell.Execute() should fail for non-executable file")
+		t.Error("Shell.executeCommand() should fail for non-executable file")
 	}
 }
 
@@ -433,10 +433,10 @@ func TestShell_PwdCommand(t *testing.T) {
 
     stdout := &bytes.Buffer{}
     sh := createTestShellWithStdin(nil, stdout, nil)
-	sh.registerCommand(command.NewPwdCommand(sh.stdout))
-    err = sh.Execute("pwd")
+	sh.registerCommand(command.NewPwdCommand())
+    err = sh.executeCommand("pwd")
     if err != nil {
-        t.Errorf("Shell.Execute() error = %v", err)
+        t.Errorf("Shell.executeCommand() error = %v", err)
         return
     }
 

@@ -12,27 +12,23 @@ var (
     ErrCatNoArgs = errors.New("no argument")
 )
 
-type CatCommand struct{
-    stdout io.Writer
-}
+type CatCommand struct{}
 
-func NewCatCommand(stdout io.Writer) *CatCommand {
-    return &CatCommand{
-        stdout: stdout,
-    }
+func NewCatCommand() *CatCommand {
+    return &CatCommand{}
 }
 
 func (c *CatCommand) Name() string {
     return "cat"
 }
 
-func (c *CatCommand) Execute(args []string) error {
+func (c *CatCommand) Execute(args []string, stdout io.Writer) error {
     if len(args) == 0 {
         return ErrCatNoArgs
     }
 
     for _, filename := range args {
-        if err := c.displayFile(filename); err != nil {
+        if err := c.displayFile(filename, stdout); err != nil {
             return fmt.Errorf("cat: %s -> %v", filename, err)
         }
     }
@@ -40,7 +36,7 @@ func (c *CatCommand) Execute(args []string) error {
     return nil
 }
 
-func (c *CatCommand) displayFile(filename string) error {
+func (c *CatCommand) displayFile(filename string, stdout io.Writer) error {
     file, err := os.Open(filename)
     if err != nil {
         return err
@@ -49,7 +45,7 @@ func (c *CatCommand) displayFile(filename string) error {
 
     scanner := bufio.NewScanner(file)
     for scanner.Scan() {
-        fmt.Fprintln(c.stdout, scanner.Text())
+        fmt.Fprintln(stdout, scanner.Text())
     }
 
     return scanner.Err()

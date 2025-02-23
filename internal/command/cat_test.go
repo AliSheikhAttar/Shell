@@ -58,7 +58,7 @@ func TestCatCommand(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            cmd := NewCatCommand(os.Stdout)
+            cmd := NewCatCommand()
             
             // Verify command name
             if got := cmd.Name(); got != "cat" {
@@ -66,7 +66,7 @@ func TestCatCommand(t *testing.T) {
             }
 
             // Execute command
-            err := cmd.Execute(tt.args)
+            err := cmd.Execute(tt.args, os.Stdout)
             if (err != nil) != tt.wantErr {
                 t.Errorf("CatCommand.Execute() error = %v, wantErr %v", err, tt.wantErr)
             }

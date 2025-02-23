@@ -56,7 +56,7 @@ func TestTypeCommand(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            cmd := NewTypeCommand(builtins, os.Stdout)
+            cmd := NewTypeCommand(builtins)
             
             // Verify command name
             if got := cmd.Name(); got != "type" {
@@ -64,7 +64,7 @@ func TestTypeCommand(t *testing.T) {
             }
 
             // Execute command
-            err := cmd.Execute(tt.args)
+            err := cmd.Execute(tt.args, os.Stdout)
             if (err != nil) != tt.wantErr {
                 t.Errorf("TypeCommand.Execute() error = %v, wantErr %v", err, tt.wantErr)
             }

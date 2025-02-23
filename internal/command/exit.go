@@ -8,15 +8,11 @@ import (
 )
 
 // ExitCommand implements the 'exit' built-in command
-type ExitCommand struct {
-	stdout io.Writer
-}
+type ExitCommand struct {}
 
 // NewExitCommand creates a new exit command
-func NewExitCommand(stdout io.Writer) *ExitCommand {
-	return &ExitCommand{
-		stdout: stdout,
-	}
+func NewExitCommand() *ExitCommand {
+	return &ExitCommand{}
 }
 
 // Name returns the name of the command
@@ -25,10 +21,10 @@ func (c *ExitCommand) Name() string {
 }
 
 // Execute handles the exit command execution
-func (c *ExitCommand) Execute(args []string) error {
+func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
 	switch len(args) {
 	case 0:
-		fmt.Fprintln(c.stdout, "exit status 0")
+		fmt.Fprintln(stdout, "exit status 0")
 		os.Exit(0)
 
 	case 1:
@@ -36,7 +32,7 @@ func (c *ExitCommand) Execute(args []string) error {
 		if err != nil {
 			return ErrInvalidArgs
 		}
-		fmt.Fprintln(c.stdout, "exit status ", status)
+		fmt.Fprintln(stdout, "exit status ", status)
 		os.Exit(0)
 	default:
 		return ErrTooManyArgs

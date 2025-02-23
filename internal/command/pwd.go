@@ -1,74 +1,65 @@
 package command
 
 import (
-    "fmt"
-    "io"
-    "os"
-    "path/filepath"
-    "runtime"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"runtime"
+	// "runtime"
 )
 
-type PwdCommand struct {
-    stdout io.Writer
+type PwdCommand struct{}
+
+func NewPwdCommand() *PwdCommand {
+	return &PwdCommand{}
 }
 
-func NewPwdCommand(stdout io.Writer) *PwdCommand {
-    return &PwdCommand{
-        stdout: stdout,
-    }
-}
+func (c *PwdCommand) Execute(args []string, stdout io.Writer) error {
+	pwd, err := c.getCurrentDirectory()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %v", err)
+	}
 
-func (c *PwdCommand) Execute(args []string) error {
-    pwd, err := c.getCurrentDirectory()
-    if err != nil {
-        return fmt.Errorf("failed to get current directory: %v", err)
-    }
-
-    _, err = fmt.Fprintln(c.stdout, pwd)
-    return err
+	_, err = fmt.Fprintln(stdout, pwd)
+	return err
 }
 
 func (c *PwdCommand) getCurrentDirectory() (string, error) {
-    // Try different methods to get the current directory
-    
-    // 1. Try PWD environment variable first
-    if pwd := os.Getenv("PWD"); pwd != "" {
-        if isValidDirectory(pwd) {
-            return filepath.Clean(pwd), nil
-        }
-    }
+	// Try different methods to get the current directory
 
-    // 2. Try /proc/self/cwd on Linux
-    if runtime.GOOS == "linux" {
-        if pwd, err := os.Readlink("/proc/self/cwd"); err == nil {
-            if isValidDirectory(pwd) {
-                return filepath.Clean(pwd), nil
-            }
-        }
-    }
+	// Try to resolve using filepath operations --> cross-compile
+	if pwd, err := filepath.Abs("."); pwd != "" && err == nil {
+		if isValidDirectory(pwd) {
+			return filepath.Clean(pwd), nil
+		}
+	}
+	// Try PWD environment variable first
+	if pwd := os.Getenv("PWD"); pwd != "" {
+		if isValidDirectory(pwd) {
+			return filepath.Clean(pwd), nil
+		}
+	}
 
-    // 3. Try to resolve using filepath operations
-    pwd, err := filepath.Abs(".")
-    if err != nil {
-        return "", err
-    }
-
-    // Verify the directory exists and is accessible
-    if !isValidDirectory(pwd) {
-        return "", fmt.Errorf("directory not accessible: %s", pwd)
-    }
-
-    return filepath.Clean(pwd), nil
+	// Try /proc/self/cwd on Linux
+	if runtime.GOOS == "linux" {
+		if pwd, err := os.Readlink("/proc/self/cwd"); err == nil {
+			if isValidDirectory(pwd) {
+				return filepath.Clean(pwd), nil
+			}
+		}
+	}
+	return "", nil
 }
 
 func isValidDirectory(path string) bool {
-    info, err := os.Stat(path)
-    if err != nil {
-        return false
-    }
-    return info.IsDir()
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
 }
 
 func (c *PwdCommand) Name() string {
-    return "pwd"
+	return "pwd"
 }

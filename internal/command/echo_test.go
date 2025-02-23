@@ -54,7 +54,7 @@ func TestEchoCommand(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            cmd := NewEchoCommand(os.Stdout)
+            cmd := NewEchoCommand()
             
             // Verify command name
             if got := cmd.Name(); got != "echo" {
@@ -64,7 +64,7 @@ func TestEchoCommand(t *testing.T) {
             // Capture stdout
             // Note: In a real implementation, you might want to use a more sophisticated
             // way to capture stdout, but this is simplified for the example
-            err := cmd.Execute(tt.args)
+            err := cmd.Execute(tt.args, os.Stdout)
             if err != nil {
                 t.Errorf("EchoCommand.Execute() error = %v", err)
             }

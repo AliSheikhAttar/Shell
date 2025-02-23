@@ -74,9 +74,9 @@ func TestPwdCommand_Execute(t *testing.T) {
             expectedDir := tt.setupFunc()
             
             stdout := &bytes.Buffer{}
-            cmd := NewPwdCommand(stdout)
+            cmd := NewPwdCommand()
 
-            err := cmd.Execute(tt.args)
+            err := cmd.Execute(tt.args, stdout)
             if (err != nil) != tt.wantErr {
                 t.Errorf("PwdCommand.Execute() error = %v, wantErr %v", err, tt.wantErr)
                 return

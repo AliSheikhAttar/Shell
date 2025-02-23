@@ -1,11 +1,12 @@
 package command
 
 import (
-    "fmt"
-    "io/fs"
-    "os"
-    "strings"
-    "time"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"strings"
+	"time"
 )
 
 // LSCommand implements the 'ls' built-in command
@@ -25,7 +26,7 @@ func (c *LSCommand) Name() string {
 }
 
 // Execute handles the ls command execution
-func (c *LSCommand) Execute(args []string) error {
+func (c *LSCommand) Execute(args []string, stdout io.Writer) error {
     // Parse arguments and options
     dirPath, err := c.parseArgs(args)
     if err != nil {
@@ -37,7 +38,7 @@ func (c *LSCommand) Execute(args []string) error {
         dirPath = "."
     }
 
-    return c.listDirectory(dirPath)
+    return c.listDirectory(dirPath, stdout)
 }
 
 // parseArgs processes command line arguments and returns the target directory
@@ -70,7 +71,7 @@ func (c *LSCommand) parseArgs(args []string) (string, error) {
 }
 
 // listDirectory lists the contents of the specified directory
-func (c *LSCommand) listDirectory(dirPath string) error {
+func (c *LSCommand) listDirectory(dirPath string, stdout io.Writer) error {
     entries, err := os.ReadDir(dirPath)
     if err != nil {
         return fmt.Errorf("cannot open directory %s: %v", dirPath, err)
@@ -84,11 +85,11 @@ func (c *LSCommand) listDirectory(dirPath string) error {
         }
 
         if c.longFormat {
-            if err := c.printLongFormat(entry); err != nil {
+            if err := c.printLongFormat(entry, stdout); err != nil {
                 return err
             }
         } else {
-            fmt.Println(entry.Name())
+            fmt.Fprintln(stdout,entry.Name())
         }
     }
 
@@ -96,7 +97,7 @@ func (c *LSCommand) listDirectory(dirPath string) error {
 }
 
 // printLongFormat prints detailed file information
-func (c *LSCommand) printLongFormat(entry fs.DirEntry) error {
+func (c *LSCommand) printLongFormat(entry fs.DirEntry, stdout io.Writer) error {
     info, err := entry.Info()
     if err != nil {
         return fmt.Errorf("error getting info for %s: %v", entry.Name(), err)
@@ -108,6 +109,6 @@ func (c *LSCommand) printLongFormat(entry fs.DirEntry) error {
     modTime := info.ModTime().Format(time.RFC3339[:19]) // Use shorter time format
     name := entry.Name()
 
-    fmt.Printf("%s %8d %s %s\n", mode, size, modTime, name)
+    fmt.Fprintf(stdout,"%s %8d %s %s\n", mode, size, modTime, name)
     return nil
 }

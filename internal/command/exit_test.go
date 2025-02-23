@@ -1,6 +1,7 @@
 package command
 
 import (
+	"os"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestExitCommand(t *testing.T) {
 			}
 
 			// Test error cases
-			err := cmd.Execute(tt.args)
+			err := cmd.Execute(tt.args, os.Stdout)
 			if err != tt.wantErr {
 				t.Errorf("ExitCommand.Execute() error = %v, wantErr %v", err, tt.wantErr)
 			}

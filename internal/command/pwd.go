@@ -1,0 +1,65 @@
+package command
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"runtime"
+	// "runtime"
+)
+
+type PwdCommand struct{}
+
+func NewPwdCommand() *PwdCommand {
+	return &PwdCommand{}
+}
+
+func (c *PwdCommand) Execute(args []string, stdout io.Writer) error {
+	pwd, err := c.getCurrentDirectory()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	_, err = fmt.Fprintln(stdout, pwd)
+	return err
+}
+
+func (c *PwdCommand) getCurrentDirectory() (string, error) {
+	// Try different methods to get the current directory
+
+	// Try to resolve using filepath operations --> cross-compile
+	if pwd, err := filepath.Abs("."); pwd != "" && err == nil {
+		if isValidDirectory(pwd) {
+			return filepath.Clean(pwd), nil
+		}
+	}
+	// Try PWD environment variable first
+	if pwd := os.Getenv("PWD"); pwd != "" {
+		if isValidDirectory(pwd) {
+			return filepath.Clean(pwd), nil
+		}
+	}
+
+	// Try /proc/self/cwd on Linux
+	if runtime.GOOS == "linux" {
+		if pwd, err := os.Readlink("/proc/self/cwd"); err == nil {
+			if isValidDirectory(pwd) {
+				return filepath.Clean(pwd), nil
+			}
+		}
+	}
+	return "", nil
+}
+
+func isValidDirectory(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
+}
+
+func (c *PwdCommand) Name() string {
+	return "pwd"
+}

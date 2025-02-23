@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>command: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">asa/shell/internal/command/cat.go (100.0%)</option>
+				
+				<option value="file1">asa/shell/internal/command/echo.go (83.0%)</option>
+				
+				<option value="file2">asa/shell/internal/command/exit.go (58.3%)</option>
+				
+				<option value="file3">asa/shell/internal/command/pwd.go (50.0%)</option>
+				
+				<option value="file4">asa/shell/internal/command/type.go (96.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package command
+
+import (
+        "bufio"
+        "errors"
+        "fmt"
+        "io"
+        "os"
+)
+
+var (
+    ErrCatNoArgs = errors.New("no argument")
+)
+
+type CatCommand struct{}
+
+func NewCatCommand() *CatCommand <span class="cov8" title="1">{
+    return &amp;CatCommand{}
+}</span>
+
+func (c *CatCommand) Name() string <span class="cov8" title="1">{
+    return "cat"
+}</span>
+
+func (c *CatCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+    if len(args) == 0 </span><span class="cov8" title="1">{
+        return ErrCatNoArgs
+    }</span>
+
+    <span class="cov8" title="1">for _, filename := range args </span><span class="cov8" title="1">{
+        if err := c.displayFile(filename, stdout); err != nil </span><span class="cov8" title="1">{
+            return fmt.Errorf("cat: %s -&gt; %v", filename, err)
+        }</span>
+    }
+
+    <span class="cov8" title="1">return nil</span>
+}
+
+func (c *CatCommand) displayFile(filename string, stdout io.Writer) error <span class="cov8" title="1">{
+    file, err := os.Open(filename)
+    if err != nil </span><span class="cov8" title="1">{
+        return err
+    }</span>
+    <span class="cov8" title="1">defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() </span><span class="cov8" title="1">{
+        fmt.Fprintln(stdout, scanner.Text())
+    }</span>
+
+    <span class="cov8" title="1">return scanner.Err()</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package command
+
+import (
+        "asa/shell/utils"
+        "fmt"
+        "io"
+        "os"
+        "strings"
+)
+
+type EchoCommand struct{}
+
+func NewEchoCommand() *EchoCommand <span class="cov8" title="1">{
+        return &amp;EchoCommand{}
+}</span>
+
+func (c *EchoCommand) Name() string <span class="cov8" title="1">{
+        return "echo"
+}</span>
+
+func (c *EchoCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        output := expandArgs(args)
+        fmt.Fprintln(stdout, output)
+        return nil
+}</span>
+
+// expandArgs processes the arguments and expands environment variables
+func expandArgs(args []string) string <span class="cov8" title="1">{
+        var result []string
+
+        for _, arg := range args </span><span class="cov8" title="1">{
+                // Check if the argument is a quoted string
+                if isQuoted(arg) </span><span class="cov8" title="1">{
+                        // Remove quotes and add as literal
+                        result = append(result, strings.Trim(arg, "'\""))
+                        continue</span>
+                }
+
+                // Expand environment variables
+                <span class="cov8" title="1">expanded := expandEnvVars(arg)
+                result = append(result, expanded)</span>
+        }
+
+        <span class="cov8" title="1">return strings.Join(result, " ")</span>
+}
+
+// expandEnvVars replaces environment variables with their values
+func expandEnvVars(s string) string <span class="cov8" title="1">{
+        var result strings.Builder
+        i := 0
+
+        for i &lt; len(s) </span><span class="cov8" title="1">{
+                if s[i] == '$' &amp;&amp; i+1 &lt; len(s) </span><span class="cov8" title="1">{
+                        j := i + 1
+                        // Find the end of the variable name
+                        for j &lt; len(s) &amp;&amp; (isAlphaNumeric(s[j]) || s[j] == '_') </span><span class="cov8" title="1">{
+                                j++
+                        }</span>
+
+                        <span class="cov8" title="1">if j &gt; i+1 </span><span class="cov8" title="1">{
+                                varName := s[i+1 : j]
+                                varValue := os.Getenv(varName)
+                                result.WriteString(varValue)
+                                i = j
+                                continue</span>
+                        }
+
+                        // cases like $"path"
+                        <span class="cov8" title="1">if utils.HasPrefix(string(s[j]), "'") </span><span class="cov8" title="1">{
+                                j++
+                                k := j + 1
+                                for !utils.HasSuffix(s[j:k], "'") </span><span class="cov8" title="1">{
+                                        k++
+                                }</span>
+
+                                <span class="cov8" title="1">result.WriteString(s[j : k-1])
+                                i = k
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">if utils.HasPrefix(string(s[j]), "\"") </span><span class="cov0" title="0">{
+                                j++
+                                k := j + 1
+                                for !utils.HasSuffix(s[j:k], "\"") </span><span class="cov0" title="0">{
+                                        k++
+                                }</span>
+
+                                <span class="cov0" title="0">result.WriteString(s[j : k-1])
+                                i = k
+                                continue</span>
+                        }
+                }
+                <span class="cov8" title="1">result.WriteByte(s[i])
+                i++</span>
+        }
+
+        <span class="cov8" title="1">return result.String()</span>
+}
+
+// isQuoted checks if a string is wrapped in quotes
+func isQuoted(s string) bool <span class="cov8" title="1">{
+        return (utils.HasPrefix(s, "'") &amp;&amp; utils.HasSuffix(s, "'")) ||
+                (utils.HasPrefix(s, "\"") &amp;&amp; utils.HasSuffix(s, "\""))
+}</span>
+
+// isAlphaNumeric checks if a character is alphanumeric
+func isAlphaNumeric(c byte) bool <span class="cov8" title="1">{
+        return (c &gt;= 'a' &amp;&amp; c &lt;= 'z') ||
+                (c &gt;= 'A' &amp;&amp; c &lt;= 'Z') ||
+                (c &gt;= '0' &amp;&amp; c &lt;= '9')
+}</span>
+
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package command
+
+import (
+        "fmt"
+        "io"
+        "os"
+        "strconv"
+)
+
+// ExitCommand implements the 'exit' built-in command
+type ExitCommand struct {}
+
+// NewExitCommand creates a new exit command
+func NewExitCommand() *ExitCommand <span class="cov8" title="1">{
+        return &amp;ExitCommand{}
+}</span>
+
+// Name returns the name of the command
+func (c *ExitCommand) Name() string <span class="cov8" title="1">{
+        return "exit"
+}</span>
+
+// Execute handles the exit command execution
+func (c *ExitCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        switch len(args) </span>{
+        case 0:<span class="cov0" title="0">
+                fmt.Fprintln(stdout, "exit status 0")
+                os.Exit(0)</span>
+
+        case 1:<span class="cov8" title="1">
+                status, err := strconv.Atoi(args[0])
+                if err != nil </span><span class="cov8" title="1">{
+                        return ErrInvalidArgs
+                }</span>
+                <span class="cov0" title="0">fmt.Fprintln(stdout, "exit status ", status)
+                os.Exit(0)</span>
+        default:<span class="cov8" title="1">
+                return ErrTooManyArgs</span>
+        }
+        <span class="cov0" title="0">return nil</span> // This line will never be reached due to os.Exit
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package command
+
+import (
+        "fmt"
+        "io"
+        "os"
+        "path/filepath"
+        "runtime"
+        // "runtime"
+)
+
+type PwdCommand struct{}
+
+func NewPwdCommand() *PwdCommand <span class="cov8" title="1">{
+        return &amp;PwdCommand{}
+}</span>
+
+func (c *PwdCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        pwd, err := c.getCurrentDirectory()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to get current directory: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">_, err = fmt.Fprintln(stdout, pwd)
+        return err</span>
+}
+
+func (c *PwdCommand) getCurrentDirectory() (string, error) <span class="cov8" title="1">{
+        // Try different methods to get the current directory
+
+        // Try to resolve using filepath operations --&gt; cross-compile
+        if pwd, err := filepath.Abs("."); pwd != "" &amp;&amp; err == nil </span><span class="cov8" title="1">{
+                if isValidDirectory(pwd) </span><span class="cov8" title="1">{
+                        return filepath.Clean(pwd), nil
+                }</span>
+        }
+        // Try PWD environment variable first
+        <span class="cov0" title="0">if pwd := os.Getenv("PWD"); pwd != "" </span><span class="cov0" title="0">{
+                if isValidDirectory(pwd) </span><span class="cov0" title="0">{
+                        return filepath.Clean(pwd), nil
+                }</span>
+        }
+
+        // Try /proc/self/cwd on Linux
+        <span class="cov0" title="0">if runtime.GOOS == "linux" </span><span class="cov0" title="0">{
+                if pwd, err := os.Readlink("/proc/self/cwd"); err == nil </span><span class="cov0" title="0">{
+                        if isValidDirectory(pwd) </span><span class="cov0" title="0">{
+                                return filepath.Clean(pwd), nil
+                        }</span>
+                }
+        }
+        <span class="cov0" title="0">return "", nil</span>
+}
+
+func isValidDirectory(path string) bool <span class="cov8" title="1">{
+        info, err := os.Stat(path)
+        if err != nil </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">return info.IsDir()</span>
+}
+
+func (c *PwdCommand) Name() string <span class="cov0" title="0">{
+        return "pwd"
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package command
+
+import (
+        "errors"
+        "fmt"
+        "io"
+        "os"
+        "path/filepath"
+        "strings"
+)
+
+var (
+        ErrCommandNotFound      = errors.New("command not found")
+        ErrMissingCommandName   = errors.New("type: missing command name")
+        ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
+)
+
+type TypeCommand struct {
+        builtins map[string]bool // Map of built-in commands
+}
+
+func NewTypeCommand(builtins []string) *TypeCommand <span class="cov8" title="1">{
+        // Create a map of built-in commands for efficient lookup
+        builtinsMap := make(map[string]bool)
+        for _, cmd := range builtins </span><span class="cov8" title="1">{
+                builtinsMap[cmd] = true
+        }</span>
+
+        <span class="cov8" title="1">return &amp;TypeCommand{
+                builtins: builtinsMap,
+        }</span>
+}
+
+func (c *TypeCommand) Name() string <span class="cov8" title="1">{
+        return "type"
+}</span>
+
+func (c *TypeCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        if len(args) == 0 </span><span class="cov8" title="1">{
+                return ErrMissingCommandName
+        }</span>
+        <span class="cov8" title="1">for _, cmd := range args </span><span class="cov8" title="1">{
+                result, err := c.findCommand(cmd)
+                if err != nil </span><span class="cov8" title="1">{
+                        return err
+                }</span>
+                <span class="cov8" title="1">fmt.Fprintln(stdout, result)</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (c *TypeCommand) findCommand(cmd string) (string, error) <span class="cov8" title="1">{
+        // Check if it's a built-in command
+        if c.builtins[cmd] </span><span class="cov8" title="1">{
+                fmt.Printf("%s is a shell builtin\n", cmd)
+                return "", nil
+        }</span>
+
+        // If not built-in, search in PATH
+        <span class="cov8" title="1">path := os.Getenv("PATH")
+        if path == "" </span><span class="cov0" title="0">{
+                return "", ErrEnvironmentVarNotSet
+        }</span>
+
+        // Search in each directory in PATH
+        <span class="cov8" title="1">dirs := strings.Split(path, ":")
+        for _, dir := range dirs </span><span class="cov8" title="1">{
+                fullPath := filepath.Join(dir, cmd)
+                if fileInfo, err := os.Stat(fullPath); err == nil </span><span class="cov8" title="1">{
+                        // Check if the file is executable
+                        if fileInfo.Mode()&amp;0111 != 0 </span><span class="cov8" title="1">{
+
+                                return fmt.Sprintf("%s is %s\n", cmd, fullPath), nil
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">return "", ErrCommandNotFound</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

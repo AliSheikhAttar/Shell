@@ -24,6 +24,12 @@ func New() *Shell {
 	exitCmd := command.NewExitCommand()
 	sh.commands[exitCmd.Name()] = exitCmd
 
+	// Register the cd command
+	cdCmd := command.NewCDCommand()
+	sh.commands[cdCmd.Name()] = cdCmd
+
+
+
 	return sh
 }
 

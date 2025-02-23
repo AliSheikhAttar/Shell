@@ -59,9 +59,10 @@ func New() *Shell {
 	sh.registerCommand(pwdCmd)
 
 	// Register the cd command
-	cdCmd := command.NewCDCommand()
+	cdCmd := command.NewCDCommand(sh.rootDir)
 	sh.registerCommand(cdCmd)
 
+	// Register the ls command
 	lsCmd := command.NewLSCommand()
 	sh.commands[lsCmd.Name()] = lsCmd	
 

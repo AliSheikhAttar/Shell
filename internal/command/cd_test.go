@@ -89,7 +89,7 @@ func TestCDCommand(t *testing.T) {
 				}
 			}
 
-			cmd := NewCDCommand()
+			cmd := NewCDCommand(homeDir)
 
 			// Verify command name
 			if got := cmd.Name(); got != "cd" {

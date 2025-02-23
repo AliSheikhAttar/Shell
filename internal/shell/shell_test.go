@@ -93,7 +93,7 @@ func TestParseCommand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := New()
-			cmd, args := s.parseCommand(tt.input)
+			cmd, args, _, _ := s.parseCommand(tt.input)
 
 			if cmd != tt.wantCmd {
 				t.Errorf("parseCommand() command = %v, want %v", cmd, tt.wantCmd)
@@ -166,7 +166,7 @@ func TestSystemCommandExecution(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sh := New()
-			err := sh.executeCommand(tt.input)
+			_, err := sh.executeCommand(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -242,7 +242,7 @@ func TestShell_SystemCommandExecution(t *testing.T) {
 			}
 
 			// Execute command
-			err := sh.executeCommand(tt.input)
+			_, err := sh.executeCommand(tt.input)
 
 			// Check error condition
 			if (err != nil) != tt.wantErr {
@@ -261,49 +261,47 @@ func TestShell_SystemCommandExecution(t *testing.T) {
 	}
 }
 func TestShell_CommandWithPipes(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        stdin    string
-        wantOut  string
-        wantErr  bool
-    }{
-        {
-            name:     "cat command with stdin",
-            input:    "cat",
-            stdin:    "test demo\n",
-            wantOut:  "test demo\n",
-            wantErr:  false,
-        },
-        {
-            name:     "cat command with multiple lines",
-            input:    "cat",
-            stdin:    "line1\nline2\n",
-            wantOut:  "line1\nline2\n",
-            wantErr:  false,
-        },
-    }
+	tests := []struct {
+		name    string
+		input   string
+		stdin   string
+		wantOut string
+		wantErr bool
+	}{
+		{
+			name:    "cat command with stdin",
+			input:   "cat",
+			stdin:   "test demo\n",
+			wantOut: "test demo\n",
+			wantErr: false,
+		},
+		{
+			name:    "cat command with multiple lines",
+			input:   "cat",
+			stdin:   "line1\nline2\n",
+			wantOut: "line1\nline2\n",
+			wantErr: false,
+		},
+	}
 
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            stdout := &bytes.Buffer{}
-            stdin := strings.NewReader(tt.stdin)
-            sh := createTestShellWithStdin(stdin, stdout, nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stdout := &bytes.Buffer{}
+			stdin := strings.NewReader(tt.stdin)
+			sh := createTestShellWithStdin(stdin, stdout, nil)
 
-            err := sh.executeSystemCommand(tt.input, []string{})
-            if (err != nil) != tt.wantErr {
-                t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
-                return
-            }
-			got := stdout.String();
-            if  got != tt.wantOut {
-                t.Errorf("Shell.executeCommand() output = %q, want %q", got, tt.wantOut)
-            }
-        })
-    }
+			err := sh.executeSystemCommand(tt.input, []string{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			got := stdout.String()
+			if got != tt.wantOut {
+				t.Errorf("Shell.executeCommand() output = %q, want %q", got, tt.wantOut)
+			}
+		})
+	}
 }
-
-
 
 func TestShell_ExecutablePermissions(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -318,7 +316,7 @@ func TestShell_ExecutablePermissions(t *testing.T) {
 	// Test executing non-executable file
 	stdout := &bytes.Buffer{}
 	sh := createTestShell(stdout, nil)
-	err = sh.executeCommand(nonExecPath)
+	_, err = sh.executeCommand(nonExecPath)
 	if err == nil {
 		t.Error("Shell.executeCommand() should fail for non-executable file")
 	}
@@ -364,18 +362,18 @@ func createTestShell(stdout, stderr io.Writer) *Shell {
 	return sh
 }
 func createTestShellWithStdin(stdin io.Reader, stdout, stderr io.Writer) *Shell {
-    sh := New()
-    if stdin != nil {
-        sh.stdin = stdin
-        sh.reader = bufio.NewReader(stdin) // Make sure to update the reader too
-    }
-    if stdout != nil {
-        sh.stdout = stdout
-    }
-    if stderr != nil {
-        sh.stderr = stderr
-    }
-    return sh
+	sh := New()
+	if stdin != nil {
+		sh.stdin = stdin
+		sh.reader = bufio.NewReader(stdin) // Make sure to update the reader too
+	}
+	if stdout != nil {
+		sh.stdout = stdout
+	}
+	if stderr != nil {
+		sh.stderr = stderr
+	}
+	return sh
 }
 
 // TestHelperProcess isn't a real test - it's used as a helper process for mocking commands
@@ -408,40 +406,39 @@ func TestHelperProcess(t *testing.T) {
 	}
 }
 
-
 // shell/shell_test.go
 
 func TestShell_PwdCommand(t *testing.T) {
-    // Create a temporary directory
-    tmpDir, err := os.MkdirTemp("", "shell-pwd-test-*")
-    if err != nil {
-        t.Fatalf("Failed to create temp directory: %v", err)
-    }
-    defer os.RemoveAll(tmpDir)
+	// Create a temporary directory
+	tmpDir, err := os.MkdirTemp("", "shell-pwd-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
 
-    // Change to the temporary directory
-    originalDir, err := os.Getwd()
-    if err != nil {
-        t.Fatalf("Failed to get current directory: %v", err)
-    }
-    defer os.Chdir(originalDir)
+	// Change to the temporary directory
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	defer os.Chdir(originalDir)
 
-    err = os.Chdir(tmpDir)
-    if err != nil {
-        t.Fatalf("Failed to change directory: %v", err)
-    }
+	err = os.Chdir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to change directory: %v", err)
+	}
 
-    stdout := &bytes.Buffer{}
-    sh := createTestShellWithStdin(nil, stdout, nil)
+	stdout := &bytes.Buffer{}
+	sh := createTestShellWithStdin(nil, stdout, nil)
 	sh.registerCommand(command.NewPwdCommand())
-    err = sh.executeCommand("pwd")
-    if err != nil {
-        t.Errorf("Shell.executeCommand() error = %v", err)
-        return
-    }
+	_, err = sh.executeCommand("pwd")
+	if err != nil {
+		t.Errorf("Shell.executeCommand() error = %v", err)
+		return
+	}
 
-    got := strings.TrimSpace(stdout.String())
-    if got != tmpDir {
-        t.Errorf("pwd command output = %v, want %v", got, tmpDir)
-    }
+	got := strings.TrimSpace(stdout.String())
+	if got != tmpDir {
+		t.Errorf("pwd command output = %v, want %v", got, tmpDir)
+	}
 }

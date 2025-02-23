@@ -62,6 +62,9 @@ func New() *Shell {
 	cdCmd := command.NewCDCommand()
 	sh.registerCommand(cdCmd)
 
+	lsCmd := command.NewLSCommand()
+	sh.commands[lsCmd.Name()] = lsCmd	
+
 	stdout := &bytes.Buffer{}
 	sh.commands["pwd"].Execute([]string{}, stdout)
 	sh.rootDir = stdout.String()

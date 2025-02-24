@@ -18,22 +18,6 @@ var (
 	ErrCommandNotSupported = errors.New("command not found")
 )
 
-var linuxBuiltins = map[string]bool{
-	"cd":      true,
-	"pwd":     true,
-	"exit":    true,
-	"echo":    true,
-	"export":  true,
-	"source":  true,
-	"alias":   true,
-	"unalias": true,
-	"set":     true,
-	"unset":   true,
-	"exec":    true,
-	"command": true,
-	".":       true,
-}
-
 type Shell struct {
 	reader   *bufio.Reader
 	commands map[string]command.Command
@@ -58,9 +42,6 @@ func New() *Shell {
 		reader:   bufio.NewReader(os.Stdin),
 		commands: make(map[string]command.Command),
 	}
-	// Define built-in commands
-	builtins := []string{"exit", "echo", "cat", "type", "cd"} // Add all built-in commands here
-
 	// Register the exit command
 	exitCmd := command.NewExitCommand()
 	sh.registerCommand(exitCmd)
@@ -73,10 +54,6 @@ func New() *Shell {
 	catCmd := command.NewCatCommand()
 	sh.registerCommand(catCmd)
 
-	// Register the type command
-	typeCmd := command.NewTypeCommand(builtins)
-	sh.registerCommand(typeCmd)
-
 	// Register the pwd command
 	pwdCmd := command.NewPwdCommand()
 	sh.registerCommand(pwdCmd)
@@ -88,6 +65,18 @@ func New() *Shell {
 	// Register the ls command
 	lsCmd := command.NewLSCommand()
 	sh.commands[lsCmd.Name()] = lsCmd
+
+	// Register the color command
+	colorCmd := command.NewColorCommand()
+	sh.commands[colorCmd.Name()] = colorCmd
+	// Register the type command
+
+	shellBuiltins := []string{}
+	for cmd := range sh.commands {
+		shellBuiltins = append(shellBuiltins, cmd)
+	}
+	typeCmd := command.NewTypeCommand(shellBuiltins)
+	sh.registerCommand(typeCmd)
 
 	stdout := &bytes.Buffer{}
 	sh.commands["pwd"].Execute([]string{}, stdout)
@@ -123,8 +112,11 @@ func (s *Shell) Start() error {
 			if stderr.isRedirected {
 				defer stderr.std.Close()
 			}
-
-			fmt.Fprintf(stderr.std, "%s: %v\n", input, err)
+			cmdError := fmt.Sprintf("%s: %v\n", input, err)
+			if utils.IsColor() {
+				cmdError = utils.ColorText(cmdError, utils.TextRed)
+			}
+			fmt.Fprintf(stderr.std, "%s", cmdError)
 			if err == ErrCommandNotSupported {
 				fmt.Println()
 				fmt.Fprintln(stderr.std, "List of supported builtin commands are as followings: ")
@@ -144,7 +136,11 @@ func (s *Shell) printPrompt() error {
 	}
 	addr := utils.HandleAdress(s.rootDir, currentDir)
 
-	_, err = fmt.Fprintf(os.Stdout, "%s$ ", addr)
+	currendDir := fmt.Sprintf("%s$ ", addr)
+	if utils.IsColor() {
+		currendDir = utils.ColorText(currendDir, utils.TextBlue)
+	}
+	_, err = fmt.Fprintf(os.Stdout, "%s", currendDir)
 	return err
 }
 
@@ -180,7 +176,7 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 	}
 
 	// linux builtin command not implemented
-	if _, isExist := linuxBuiltins[cmd]; isExist {
+	if _, isExist := utils.LinuxBuiltins[cmd]; isExist {
 		return redirects.stderr, ErrCommandNotSupported
 	}
 

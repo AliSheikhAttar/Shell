@@ -89,7 +89,6 @@ func (c *LSCommand) listDirectory(dirPath string, stdout io.Writer) error {
 				return err
 			}
 		} else {
-			fmt.Fprintln(stdout, "list directory")
 			fmt.Fprintln(stdout, entry.Name())
 		}
 	}
@@ -109,7 +108,6 @@ func (c *LSCommand) printLongFormat(entry fs.DirEntry, stdout io.Writer) error {
 	size := info.Size()
 	modTime := info.ModTime().Format(time.RFC3339[:19]) // Use shorter time format
 	name := entry.Name()
-	fmt.Fprintln(stdout, "print long format")
 	fmt.Fprintf(stdout, "%s %8d %s %s\n", mode, size, modTime, name)
 	return nil
 }

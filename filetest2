@@ -1,2 +1,0 @@
-ls -t 2> filetest: invalid option: t
-cd 2>> filetest: no such file or directory

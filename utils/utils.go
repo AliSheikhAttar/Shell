@@ -11,8 +11,68 @@ import (
 var (
 	ErrCommandNotFound      = errors.New("command not found")
 	ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
-	ErrPwdWentWrong         = errors.New("Something went wrong while trying to identify current dir")
+	ErrPwdWentWrong         = errors.New("something went wrong while trying to identify current dir")
 )
+
+var LinuxBuiltins = map[string]bool{
+	"cd":      true,
+	"pwd":     true,
+	"exit":    true,
+	"echo":    true,
+	"export":  true,
+	"source":  true,
+	"alias":   true,
+	"unalias": true,
+	"set":     true,
+	"unset":   true,
+	"exec":    true,
+	"command": true,
+	".":       true,
+}
+
+const (
+	// Text colors
+	TextBlack   = "\033[30m"
+	TextRed     = "\033[31m"
+	TextGreen   = "\033[32m"
+	TextYellow  = "\033[33m"
+	TextBlue    = "\033[34m"
+	TextMagenta = "\033[35m"
+	TextCyan    = "\033[36m"
+	TextWhite   = "\033[37m"
+
+	// Background colors
+	BgBlack   = "\033[40m"
+	BgRed     = "\033[41m"
+	BgGreen   = "\033[42m"
+	BgYellow  = "\033[43m"
+	BgBlue    = "\033[44m"
+	BgMagenta = "\033[45m"
+	BgCyan    = "\033[46m"
+	BgWhite   = "\033[47m"
+
+	// Special formatting
+	Reset     = "\033[0m"
+	Bold      = "\033[1m"
+	Dim       = "\033[2m"
+	Italic    = "\033[3m"
+	Underline = "\033[4m"
+	Blink     = "\033[5m"
+	Reverse   = "\033[7m"
+)
+
+func ColorText(text string, formats ...string) string {
+	var combined string
+	for _, format := range formats {
+		combined += format
+	}
+	return combined + text + Reset
+}
+
+func IsColor() bool {
+	_, ok := os.LookupEnv("SHELLCOLOR")
+	return ok
+}
 
 func FindCommand(cmd string) (string, error) {
 	// Check if it's a built-in command

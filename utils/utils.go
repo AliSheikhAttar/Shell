@@ -12,6 +12,7 @@ var (
 	ErrCommandNotFound      = errors.New("command not found")
 	ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
 	ErrPwdWentWrong         = errors.New("something went wrong while trying to identify current dir")
+	ErrInvalidQuotedArg     = errors.New("invalid Quoted arg")
 )
 
 var LinuxBuiltins = map[string]bool{
@@ -105,12 +106,109 @@ func FindCommand(cmd string) (string, error) {
 	return "", ErrCommandNotFound
 }
 
+// isQuoted checks if a string is wrapped in quotes
+func IsQuoted(s string) bool {
+	return (HasPrefix(s, "'") && HasSuffix(s, "'")) ||
+		(HasPrefix(s, "\"") && HasSuffix(s, "\""))
+}
+
+// isQuoted checks if a string is wrapped in quotes
+func IsQuoted1(s string) bool {
+	return len(s) != 1 && ((HasPrefix(s, "'") && HasSuffix(s, "'")) ||
+		(HasPrefix(s, "\"") && HasSuffix(s, "\"")))
+}
+
+// isAlphaNumeric checks if a character is alphanumeric
+func IsAlphaNumeric(c byte) bool {
+	return (c >= 'a' && c <= 'z') ||
+		(c >= 'A' && c <= 'Z') ||
+		(c >= '0' && c <= '9')
+}
+
 func HasPrefix(s string, prefix string) bool {
-	return len(s) >= len(prefix) && s[0:len(prefix)] == prefix
+	w := !(s[0:len(prefix)] == prefix)
+	return len(s) >= len(prefix) && !w
 }
 
 func HasSuffix(s string, suffix string) bool {
-	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
+	w := !(s[len(s)-len(suffix):] == suffix)
+	return len(s) >= len(suffix) && !w
+}
+
+func TrimEdge(s string) string {
+	if len(s) < 1 {
+		return s
+	}
+	return s[1:len(s)-1]
+}
+func ExtractQuotes(input string) ([]string, error) {
+	res := []string{}
+	for i := 0; i < len(input); i++ {
+		if input[i] == '"' {
+			var result strings.Builder
+			result.WriteByte(input[i])
+			for i = i + 1; i < len(input) && input[i] != '"'; i++ {
+				result.WriteByte(input[i])
+			}
+			if i == len(input) || input[i] != '"' {
+				result.WriteByte('"') // last quote
+				res = append(res, result.String())
+				return res, ErrInvalidQuotedArg
+			}
+			result.WriteByte(input[i]) // last quote
+			res = append(res, result.String())
+		} else if input[i] == '\'' {
+			var result strings.Builder
+			result.WriteByte(input[i])
+			for i = i + 1; i < len(input) && input[i] != '\''; i++ {
+				result.WriteByte(input[i])
+			}
+			if i == len(input) || input[i] != '\'' {
+				result.WriteByte('\'') // last quote
+				res = append(res, result.String())
+				return res, ErrInvalidQuotedArg
+			}
+			result.WriteByte(input[i]) // last quote
+			res = append(res, result.String())
+		}
+	}
+	return res, nil
+}
+
+func Seperate(input string, quotes []string) (res []string) {
+	fields := strings.Fields(input)
+	j := 0
+	for i := 0; i < len(fields); i++ {
+		if HasPrefix(fields[i], string("'")) {
+			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
+				res = append(res, quotes[j])
+				j++
+				continue
+			}
+			i++
+			for i < len(fields) && !HasSuffix(fields[i], string("'")) {
+				i++
+			}
+			res = append(res, quotes[j])
+			j++
+			continue
+		} else if HasPrefix(fields[i], string('"')) {
+			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
+				res = append(res, quotes[j])
+				j++
+				continue
+			}
+			i++
+			for i < len(fields) && !HasSuffix(fields[i], string('"')) {
+				i++
+			}
+			res = append(res, quotes[j])
+			j++
+			continue
+		}
+		res = append(res, fields[i])
+	}
+	return res
 }
 
 func HandleAdress(baseAddr string, currentDir string) string {

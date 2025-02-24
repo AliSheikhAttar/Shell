@@ -30,7 +30,6 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) {
 	if len(args) == 0 {
 		return args, nil, nil
 	}
-
 	for i, arg := range args {
 		switch {
 		case arg == ">":

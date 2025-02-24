@@ -30,9 +30,9 @@ func expandArgs(args []string) string {
 
 	for _, arg := range args {
 		// Check if the argument is a quoted string
-		if isQuoted(arg) {
+		if utils.IsQuoted(arg) {
 			// Remove quotes and add as literal
-			result = append(result, strings.Trim(arg, "'\""))
+			result = append(result, utils.TrimEdge(arg))
 			continue
 		}
 
@@ -53,7 +53,7 @@ func expandEnvVars(s string) string {
 		if s[i] == '$' && i+1 < len(s) {
 			j := i + 1
 			// Find the end of the variable name
-			for j < len(s) && (isAlphaNumeric(s[j]) || s[j] == '_') {
+			for j < len(s) && (utils.IsAlphaNumeric(s[j]) || s[j] == '_') {
 				j++
 			}
 
@@ -95,17 +95,3 @@ func expandEnvVars(s string) string {
 
 	return result.String()
 }
-
-// isQuoted checks if a string is wrapped in quotes
-func isQuoted(s string) bool {
-	return (utils.HasPrefix(s, "'") && utils.HasSuffix(s, "'")) ||
-		(utils.HasPrefix(s, "\"") && utils.HasSuffix(s, "\""))
-}
-
-// isAlphaNumeric checks if a character is alphanumeric
-func isAlphaNumeric(c byte) bool {
-	return (c >= 'a' && c <= 'z') ||
-		(c >= 'A' && c <= 'Z') ||
-		(c >= '0' && c <= '9')
-}
-

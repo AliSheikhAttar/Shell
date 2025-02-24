@@ -107,7 +107,7 @@ func (s *Shell) Start() error {
 			continue
 		}
 
-		// Process the command (for now, just echo it back)
+		// Process the command and write errors
 		if stderr, err := s.executeCommand(input); err != nil {
 			if stderr.isRedirected {
 				defer stderr.std.Close()
@@ -150,7 +150,11 @@ func (s *Shell) readInput() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	// input := "echo 'hello \"mom\"    world'  hello \"hi    'dad'   there    !\""
+	// input := "echo 'home'"
+	// input := "echo 'hello    \"world\" is nice ' sds     jlsd  \"      x is       here     \" ok"
+	// input := "echo 'hello    \"world\" is nice ' sds     jlsd  \"      x is       here     \" ok\""
+	// input := "echo '\"hello\"'"
 	// Trim whitespace and newline
 	return strings.TrimSpace(input), nil
 }
@@ -212,8 +216,9 @@ func (s *Shell) executeSystemCommand(name string, args []string) error {
 
 // parseCommand splits the input into command and arguments
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
-	fields := strings.Fields(input)
 	redirects := &redirect{stdout: &std{os.Stdout, false}, stderr: &std{os.Stderr, false}}
+	quotes, err1 := utils.ExtractQuotes(input)
+	fields := utils.Seperate(input, quotes)
 
 	if len(fields) == 0 {
 		return "", nil, redirects, nil
@@ -240,5 +245,5 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 			redirects.stderr.isRedirected = true
 		}
 	}
-	return fields[0], args, redirects, nil
+	return fields[0], args, redirects, err1
 }

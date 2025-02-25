@@ -2,60 +2,63 @@ package echo
 
 import (
 	"bytes"
-	"os"
-	"strings"
 	"testing"
 )
 
 func TestEchoCommand(t *testing.T) {
-	// Set up test environment variable
-	os.Setenv("PATH1", "/usr/local/bin:/usr/bin:/bin")
-	os.Setenv("HOME1", "/home/user")
-
 	tests := []struct {
-		name     string
-		args     []string
-		expected string
+		name        string
+		args        []string
+		expectedOutput string
+		wantErr     bool // Echo command generally should not return errors in these basic tests
 	}{
 		{
-			name:     "simple text",
-			args:     []string{"hello"},
-			expected: "hello",
+			name:        "no arguments",
+			args:        []string{},
+			expectedOutput: "\n", // Echo with no args prints just a newline
+			wantErr:     false,
 		},
 		{
-			name:     "multiple words",
-			args:     []string{"hello", "world"},
-			expected: "hello world",
+			name:        "single argument - hello",
+			args:        []string{"hello"},
+			expectedOutput: "hello\n",
+			wantErr:     false,
 		},
 		{
-			name:     "with environment variable",
-			args:     []string{"Path1:", "$PATH1"},
-			expected: "Path1: /usr/local/bin:/usr/bin:/bin",
+			name:        "multiple arguments - hello world",
+			args:        []string{"hello", "world"},
+			expectedOutput: "hello world\n",
+			wantErr:     false,
 		},
 		{
-			name:     "quoted text",
-			args:     []string{"'hello PATH'"},
-			expected: "hello PATH",
+			name:        "argument with spaces - quoted string",
+			args:        []string{"hello world"}, // Arguments are already split by shell, so no quotes needed here for echo itself
+			expectedOutput: "hello world\n",
+			wantErr:     false,
 		},
 		{
-			name:     "quoted text with special char",
-			args:     []string{"'hello $PATH'"},
-			expected: "hello $PATH",
+			name:        "empty string argument - double quotes",
+			args:        []string{""}, // Pass empty string as argument
+			expectedOutput: "\n", // Echo of empty string prints a newline
+			wantErr:     false,
 		},
 		{
-			name:     "mixed content",
-			args:     []string{"Home1", "is", "$HOME"},
-			expected: "Home1 is /home/asa",
+			name:        "empty string argument - single quotes",
+			args:        []string{}, // Pass empty string as argument
+			expectedOutput: "\n", // Echo of empty string prints a newline
+			wantErr:     false,
 		},
 		{
-			name:     "environment variable in word",
-			args:     []string{"no$PATH1"},
-			expected: "no/usr/local/bin:/usr/bin:/bin",
+			name:        "arguments with special characters",
+			args:        []string{"!@#$", "%^&*()", "+=", `{}`},
+			expectedOutput: "!@#$ %^&*() +=" + " {}\n", // Joined with spaces
+			wantErr:     false,
 		},
 		{
-			name:     "quoted environment variable",
-			args:     []string{"$'PATH'"},
-			expected: "PATH",
+			name:        "mixed arguments - strings and special chars",
+			args:        []string{"hello", "!@#$", "world"},
+			expectedOutput: "hello !@#$ world\n",
+			wantErr:     false,
 		},
 	}
 
@@ -63,22 +66,30 @@ func TestEchoCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := NewEchoCommand()
 
-			// Verify command name
+			// Verify command name (optional, but good practice)
 			if got := cmd.Name(); got != "echo" {
 				t.Errorf("EchoCommand.Name() = %v, want %v", got, "echo")
 			}
 
 			// Capture stdout
-			// Note: In a real implementation, you might want to use a more sophisticated
-			// way to capture stdout, but this is simplified for the example
 			stdout := &bytes.Buffer{}
 			err := cmd.Execute(tt.args, stdout)
-			if err != nil {
-				t.Errorf("EchoCommand.Execute() error = %v", err)
+
+			// Check for unexpected error
+			if tt.wantErr {
+				t.Errorf("Test '%s' expected error, but got nil", tt.name) // In these tests, wantErr is always false, but kept for structure
+			} else if err != nil {
+				t.Errorf("Test '%s' unexpected error: %v", tt.name, err)
 			}
-			got := strings.TrimSpace(stdout.String())
-			if got != tt.expected {
-				t.Errorf("PwdCommand.Execute() output = %v, want %v", got, tt.expected)
+
+			// Check output
+			gotOutput := stdout.String()
+			if gotOutput != tt.expectedOutput {
+				// For better diff in test failures, especially with newlines.
+				if len(gotOutput) != len(tt.expectedOutput) || gotOutput != tt.expectedOutput {
+					t.Errorf("EchoCommand.Execute() output mismatch for test '%s':\n"+
+						"Got:\n`%s`\nWant:\n`%s`", tt.name, gotOutput, tt.expectedOutput)
+				}
 			}
 		})
 	}

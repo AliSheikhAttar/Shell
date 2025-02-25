@@ -14,6 +14,8 @@ var (
 	ErrUserNameRequired = errors.New("username is required")
 	ErrWrongPassword    = errors.New("wrong password")
 	ErrDuplicateUser    = errors.New("duplicate user exists with this username")
+	ErrUserNotFound     = errors.New("user not found")
+
 )
 
 func RegisterUser(db *gorm.DB, user *User) error {
@@ -54,7 +56,7 @@ func GetUser(db *gorm.DB, username string, password string) (User, error) {
 	var user User
 	if err := db.Where("user_name = ? ", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return user, fmt.Errorf("user not found")
+			return user, ErrUserNotFound
 		}
 		return user, err
 	}

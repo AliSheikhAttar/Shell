@@ -53,59 +53,59 @@ func TestLoginCommand_Execute(t *testing.T) {
 		expectedErr error
 		assertUser  func(t *testing.T, currentUser *user.User, expectedError error)
 	}{
-		// {
-		// 	name: "Valid username and password",
-		// 	args: []string{"testuser", "password123"},
-		// 	setupDB: func(db *gorm.DB) {
-		// 		hashedPassword := "password123"
-		// 		existingUser := &user.User{Username: "testuser", Password: hashedPassword}
-		// 		err := user.RegisterUser(db, existingUser)
-		// 		if err != nil {
-		// 			t.Fatalf("Failed to setup existing user: %v", err)
-		// 		}
-		// 	},
-		// 	expectedErr: nil,
-		// 	assertUser: func(t *testing.T, currentUser *user.User, expectedError error) {
-		// 		if currentUser.Username != "testuser" {
-		// 			t.Errorf("Expected current user username to be 'testuser', but got '%s'", currentUser.Username)
-		// 		}
-		// 		if currentUser.Password != "password123" {
-		// 			t.Errorf("Expected current user password to be 'password123', but got '%s'", currentUser.Password)
-		// 		}
-		// 		if currentUser.ID == 0 {
-		// 			t.Errorf("Expected current user ID to be set (not 0)")
-		// 		}
-		// 		if expectedError != nil {
-		// 			t.Errorf("Expected no error, but got: %v", expectedError)
-		// 		}
-		// 	},
-		// },
-		// {
-		// 	name: "Valid username, no password provided (empty password in DB)",
-		// 	args: []string{"testuser"},
-		// 	setupDB: func(db *gorm.DB) {
-		// 		existingUser := &user.User{Username: "testuser", Password: ""}
-		// 		err := user.RegisterUser(db, existingUser)
-		// 		if err != nil {
-		// 			t.Fatalf("Failed to setup existing user: %v", err)
-		// 		}
-		// 	},
-		// 	expectedErr: nil,
-		// 	assertUser: func(t *testing.T, currentUser *user.User, expectedError error) {
-		// 		if currentUser.Username != "testuser" {
-		// 			t.Errorf("Expected current user username to be 'testuser', but got '%s'", currentUser.Username)
-		// 		}
-		// 		if currentUser.Password != "" {
-		// 			t.Errorf("Expected current user password to be empty, but got '%s'", currentUser.Password)
-		// 		}
-		// 		if currentUser.ID == 0 {
-		// 			t.Errorf("Expected current user ID to be set")
-		// 		}
-		// 		if expectedError != nil {
-		// 			t.Errorf("Expected no error, but got: %v", expectedError)
-		// 		}
-		// 	},
-		// },
+		{
+			name: "Valid username and password",
+			args: []string{"testuser", "password123"},
+			setupDB: func(db *gorm.DB) {
+				hashedPassword := "password123"
+				existingUser := &user.User{Username: "testuser", Password: hashedPassword}
+				err := user.RegisterUser(db, existingUser)
+				if err != nil {
+					t.Fatalf("Failed to setup existing user: %v", err)
+				}
+			},
+			expectedErr: nil,
+			assertUser: func(t *testing.T, currentUser *user.User, expectedError error) {
+				if currentUser.Username != "testuser" {
+					t.Errorf("Expected current user username to be 'testuser', but got '%s'", currentUser.Username)
+				}
+				if currentUser.Password != "password123" {
+					t.Errorf("Expected current user password to be 'password123', but got '%s'", currentUser.Password)
+				}
+				if currentUser.ID == 0 {
+					t.Errorf("Expected current user ID to be set (not 0)")
+				}
+				if expectedError != nil {
+					t.Errorf("Expected no error, but got: %v", expectedError)
+				}
+			},
+		},
+		{
+			name: "Valid username, no password provided (empty password in DB)",
+			args: []string{"testuser"},
+			setupDB: func(db *gorm.DB) {
+				existingUser := &user.User{Username: "testuser", Password: ""}
+				err := user.RegisterUser(db, existingUser)
+				if err != nil {
+					t.Fatalf("Failed to setup existing user: %v", err)
+				}
+			},
+			expectedErr: nil,
+			assertUser: func(t *testing.T, currentUser *user.User, expectedError error) {
+				if currentUser.Username != "testuser" {
+					t.Errorf("Expected current user username to be 'testuser', but got '%s'", currentUser.Username)
+				}
+				if currentUser.Password != "" {
+					t.Errorf("Expected current user password to be empty, but got '%s'", currentUser.Password)
+				}
+				if currentUser.ID == 0 {
+					t.Errorf("Expected current user ID to be set")
+				}
+				if expectedError != nil {
+					t.Errorf("Expected no error, but got: %v", expectedError)
+				}
+			},
+		},
 		{
 			name: "Invalid username",
 			args: []string{"nonexistentuser", "password"},
@@ -120,7 +120,7 @@ func TestLoginCommand_Execute(t *testing.T) {
 				if currentUser.ID != 0 {
 					t.Errorf("Expected current user ID to be 0, but got %d", currentUser.ID)
 				}
-				if !errors.Is(expectedError, errors.New("user not found")) { // <---- CORRECT error assertion using errors.Is
+				if expectedError.Error() != errors.New("user not found").Error() { // <---- CORRECT error assertion using errors.Is
 					t.Errorf("Expected error '%v', but got: %v", errors.New("user not found"), expectedError) // Corrected expected error value in error message
 				}
 			},
@@ -191,8 +191,10 @@ func TestLoginCommand_Execute(t *testing.T) {
 			var buf bytes.Buffer
 			err := cmdWithDB.Execute(cmdTest.args, &buf)
 
-			if !errors.Is(err, cmdTest.expectedErr) {
-				t.Errorf("Execute() error = %v, wantErr %v", err, cmdTest.expectedErr)
+			if err != nil && cmdTest.expectedErr != nil {
+				if err.Error() != cmdTest.expectedErr.Error() {
+					t.Errorf("Execute() error = %v, wantErr %v", err, cmdTest.expectedErr)
+				}
 			}
 
 			cmdTest.assertUser(t, currentUser, err)

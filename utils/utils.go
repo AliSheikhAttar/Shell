@@ -30,6 +30,7 @@ var (
 	ErrUnvalidArg           = errors.New("unvalid Argument")
 	ErrColorUnset           = errors.New("color is not set")
 	ErrColorWrong           = errors.New("something went wrong, couldn't color your shell")
+	ErrMissingCommandName   = errors.New("type: missing command name")
 )
 
 var LinuxBuiltins = map[string]bool{

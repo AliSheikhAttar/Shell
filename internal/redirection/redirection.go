@@ -26,15 +26,31 @@ type Redirection struct {
 }
 
 // ParseRedirection parses command arguments for redirection operators
-func ParseRedirection(args []string) ([]string, *Redirection, error) {
+func ParseRedirection(args []string, initialQuotes []string) ([]string, *Redirection, error) {
 	if len(args) == 0 {
 		return args, nil, nil
+	}
+	for _, initQuote := range initialQuotes {
+		for i := 0; i < len(initQuote); i++ {
+			if string(initQuote[i]) == ">" {
+				return args, nil, nil
+			}
+		}
 	}
 	for i, arg := range args {
 		switch {
 		case arg == ">":
 			if i+1 >= len(args) {
 				return nil, nil, ErrMissingFileForRedirection
+			}
+			if i == 0 {
+				if len(args) < 4 {
+					return args, nil, ErrMissingFileForRedirection
+				}
+				return args[3:], &Redirection{
+					Type: OutputRedirect,
+					File: args[1],
+				}, nil
 			}
 			return args[:i], &Redirection{
 				Type: OutputRedirect,
@@ -45,6 +61,15 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) {
 			if i+1 >= len(args) {
 				return nil, nil, ErrMissingFileForRedirection
 			}
+			if i == 0 {
+				if len(args) < 4 {
+					return args, nil, ErrMissingFileForRedirection
+				}
+				return args[3:], &Redirection{
+					Type: OutputAppend,
+					File: args[1],
+				}, nil
+			}
 			return args[:i], &Redirection{
 				Type: OutputAppend,
 				File: args[i+1],
@@ -54,6 +79,15 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) {
 			if i+1 >= len(args) {
 				return nil, nil, ErrMissingFileForRedirection
 			}
+			if i == 0 {
+				if len(args) < 4 {
+					return args, nil, ErrMissingFileForRedirection
+				}
+				return args[3:], &Redirection{
+					Type: ErrorRedirect,
+					File: args[1],
+				}, nil
+			}
 			return args[:i], &Redirection{
 				Type: ErrorRedirect,
 				File: args[i+1],
@@ -62,6 +96,15 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) {
 		case arg == "2>>":
 			if i+1 >= len(args) {
 				return nil, nil, ErrMissingFileForRedirection
+			}
+			if i == 0 {
+				if len(args) < 4 {
+					return args, nil, ErrMissingFileForRedirection
+				}
+				return args[3:], &Redirection{
+					Type: ErrorAppend,
+					File: args[1],
+				}, nil
 			}
 			return args[:i], &Redirection{
 				Type: ErrorAppend,

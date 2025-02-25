@@ -33,13 +33,6 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) {
 			return filepath.Clean(pwd), nil
 		}
 	}
-	// Try PWD environment variable first
-	if pwd := os.Getenv("PWD"); pwd != "" {
-		if utils.IsValidDirectory(pwd) {
-			return filepath.Clean(pwd), nil
-		}
-	}
-
 	// Try /proc/self/cwd on Linux
 	if runtime.GOOS == "linux" {
 		if pwd, err := os.Readlink("/proc/self/cwd"); err == nil {

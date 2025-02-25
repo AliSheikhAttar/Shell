@@ -1,18 +1,12 @@
 package typecmd
 
 import (
-	"errors"
+	"asa/shell/utils"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-)
-
-var (
-	ErrCommandNotFound      = errors.New("command not found")
-	ErrMissingCommandName   = errors.New("type: missing command name")
-	ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
 )
 
 type TypeCommand struct {
@@ -37,7 +31,7 @@ func (c *TypeCommand) Name() string {
 
 func (c *TypeCommand) Execute(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return ErrMissingCommandName
+		return utils.ErrMissingCommandName
 	}
 	for _, cmd := range args {
 		result, err := c.findCommand(cmd)
@@ -53,14 +47,13 @@ func (c *TypeCommand) Execute(args []string, stdout io.Writer) error {
 func (c *TypeCommand) findCommand(cmd string) (string, error) {
 	// Check if it's a built-in command
 	if c.builtins[cmd] {
-		fmt.Printf("%s is a shell builtin\n", cmd)
-		return "", nil
+		return fmt.Sprintf("%s is a shell builtin", cmd), nil
 	}
 
 	// If not built-in, search in PATH
 	path := os.Getenv("PATH")
 	if path == "" {
-		return "", ErrEnvironmentVarNotSet
+		return "", utils.ErrEnvironmentVarNotSet
 	}
 
 	// Search in each directory in PATH
@@ -71,10 +64,10 @@ func (c *TypeCommand) findCommand(cmd string) (string, error) {
 			// Check if the file is executable
 			if fileInfo.Mode()&0111 != 0 {
 
-				return fmt.Sprintf("%s is %s\n", cmd, fullPath), nil
+				return fmt.Sprintf("%s is %s", cmd, fullPath), nil
 			}
 		}
 	}
 
-	return "", ErrCommandNotFound
+	return "", utils.ErrCommandNotFound
 }

@@ -29,7 +29,7 @@ func (c *CatCommand) Execute(args []string, stdout io.Writer) error {
 
 	for _, filename := range args {
 		if err := c.displayFile(filename, stdout); err != nil {
-			return fmt.Errorf("cat: %s -> %v", filename, err)
+			return err
 		}
 	}
 

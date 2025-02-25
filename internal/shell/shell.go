@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -32,7 +31,7 @@ import (
 
 var (
 	ErrCommandNotSupported = errors.New("command not found")
-	ErrNotValidDirectory   = errors.New("Current directory is not valid")
+	ErrNotValidDirectory   = errors.New("current directory is not valid")
 )
 
 type Shell struct {
@@ -42,10 +41,6 @@ type Shell struct {
 	commands map[string]command.Command
 	history  map[string]int
 	rootDir  string
-	stdin    io.Reader
-	stdout   io.Writer
-	stderr   io.Writer
-	debugCtr int
 }
 
 type std struct {
@@ -68,7 +63,6 @@ func New() *Shell {
 		reader:   bufio.NewReader(os.Stdin),
 		commands: make(map[string]command.Command),
 		history:  make(map[string]int),
-		debugCtr: 0,
 		rootDir:  rootDir,
 	}
 	exitCmd := exit.NewExitCommand(sh.database, &sh.user)
@@ -182,6 +176,7 @@ func (s *Shell) readInput() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// input := ">> file.4 cat file.3"
 	return strings.TrimSpace(input), nil
 }
 
@@ -218,14 +213,14 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 		return redirects.stderr, ErrCommandNotSupported
 	}
 
-	if err := s.executeSystemCommand(cmd, args); err != nil {
+	if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil {
 		return redirects.stderr, ErrCommandNotSupported
 	}
 
 	return redirects.stderr, nil
 }
 
-func (s *Shell) executeSystemCommand(name string, args []string) error {
+func (s *Shell) executeSystemCommand(name string, args []string, stdout *os.File, stderr *os.File) error {
 	execPath, err := utils.FindCommand(name)
 	if err != nil {
 		return err
@@ -235,6 +230,9 @@ func (s *Shell) executeSystemCommand(name string, args []string) error {
 	}
 
 	cmd := exec.Command(execPath, args...)
+
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	err = cmd.Run()
 	if err != nil {
@@ -246,18 +244,20 @@ func (s *Shell) executeSystemCommand(name string, args []string) error {
 
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
 	var quotes []string
+	var quotes1 []string
 	redirects := &redirect{stdout: &std{os.Stdout, false}, stderr: &std{os.Stderr, false}}
 	parsedArg, err1 := utils.ParseArgs(input)
 	if err1 != nil {
 		return "", nil, redirects, nil
 	}
+	quotes1, _ = utils.ExtractQuotes(input)
 	quotes, err1 = utils.ExtractQuotes(parsedArg)
 	fields := utils.Seperate(parsedArg, quotes)
 	if len(fields) == 0 {
 		return "", nil, redirects, nil
 	}
 	// Parse redirection
-	args, redir, err := redirection.ParseRedirection(fields[1:])
+	args, redir, err := redirection.ParseRedirection(fields, quotes1)
 	if err != nil {
 		return "", nil, redirects, err
 	}
@@ -277,5 +277,10 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 			redirects.stderr.isRedirected = true
 		}
 	}
-	return fields[0], args, redirects, err1
+	// for case : > file3 cat file2
+	if fields[0][0] != '>' {
+		return fields[0], args[1:], redirects, err1
+	} else {
+		return fields[2], args, redirects, err1
+	}
 }

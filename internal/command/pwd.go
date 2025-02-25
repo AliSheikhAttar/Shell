@@ -27,9 +27,7 @@ func (c *PwdCommand) Execute(args []string, stdout io.Writer) error {
 }
 
 func (c *PwdCommand) getCurrentDirectory() (string, error) {
-	// Try different methods to get the current directory
 
-	// Try to resolve using filepath operations --> cross-compile
 	if pwd, err := filepath.Abs("."); pwd != "" && err == nil {
 		if utils.IsValidDirectory(pwd) {
 			return filepath.Clean(pwd), nil
@@ -52,7 +50,6 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) {
 	}
 	return "", nil
 }
-
 
 func (c *PwdCommand) Name() string {
 	return "pwd"

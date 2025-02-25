@@ -2,12 +2,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug with Console",
+            "name": "Launch Package", // You can change the name
             "type": "go",
             "request": "launch",
-            "mode": "debug",
-            "program": "${workspaceFolder}",
-            "console": "integratedTerminal"  // This enables stdin input
+            "mode": "auto",
+            "program": "${workspaceFolder}", // Or: "${workspaceFolder}/path/to/your/main.go"
+            "console": "integratedTerminal" // Or "externalTerminal"
         }
     ]
 }

@@ -43,13 +43,13 @@ func (c *CDCommand) Execute(args []string, stdout io.Writer) error {
 		switch args[0] {
 		case "~":
 			// cd ~ - go to home directory
-			dir = c.rootDir
+			dir = os.Getenv("HOME")
 		default:
 			// cd <path> - go to specified directory
 			dir = args[0]
 			// Handle relative paths that start with ~
 			if len(dir) > 0 && dir[0] == '~' {
-				home := c.rootDir
+				home := os.Getenv("HOME")
 				dir = filepath.Join(home, dir[1:])
 				break
 			}
@@ -58,16 +58,14 @@ func (c *CDCommand) Execute(args []string, stdout io.Writer) error {
 				if err != nil {
 					return err
 				}
-				if utils.IsValidDirectory(currentDir) {
-					currentCleanDir := filepath.Clean(currentDir)
-					args := strings.Split(currentCleanDir, "/")
-					args = args[:len(args)-1]
-					newDir := strings.Join(args, "/")
-					if utils.IsValidDirectory(newDir) {
-						dir = newDir
-						break
+				currentCleanDir := filepath.Clean(currentDir)
+				dirArgs := strings.Split(currentCleanDir, "/")
+				dirArgs = dirArgs[:len(dirArgs)-1]
+				newDir := strings.Join(dirArgs, "/")
+				if utils.IsValidDirectory(newDir) {
+					dir = newDir
+					break
 
-					}
 				}
 			}
 		}

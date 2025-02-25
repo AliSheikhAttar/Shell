@@ -1,18 +1,27 @@
 package command
 
 import (
+	user "asa/shell/internal/service"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 // ExitCommand implements the 'exit' built-in command
-type ExitCommand struct {}
+type ExitCommand struct {
+	user *user.User
+	db   *gorm.DB
+}
 
 // NewExitCommand creates a new exit command
-func NewExitCommand() *ExitCommand {
-	return &ExitCommand{}
+func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand {
+	return &ExitCommand{
+		user: user,
+		db:   db,
+	}
 }
 
 // Name returns the name of the command
@@ -22,12 +31,19 @@ func (c *ExitCommand) Name() string {
 
 // Execute handles the exit command execution
 func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
+
 	switch len(args) {
 	case 0:
+		if c.user.Username != "" {
+			user.Update(c.db, c.user)
+		}
 		fmt.Fprintln(stdout, "exit status 0")
 		os.Exit(0)
 
 	case 1:
+		if c.user.Username != "" {
+			user.Update(c.db, c.user)
+		}
 		status, err := strconv.Atoi(args[0])
 		if err != nil {
 			return ErrInvalidArgs
@@ -37,5 +53,5 @@ func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
 	default:
 		return ErrTooManyArgs
 	}
-	return nil // This line will never be reached due to os.Exit
+	return nil
 }

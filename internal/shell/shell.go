@@ -2,7 +2,9 @@ package shell
 
 import (
 	"asa/shell/internal/command"
+	db "asa/shell/internal/database"
 	"asa/shell/internal/redirection"
+	user "asa/shell/internal/service"
 	"asa/shell/utils"
 	"bufio"
 	"bytes"
@@ -12,19 +14,26 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 var (
 	ErrCommandNotSupported = errors.New("command not found")
+	ErrNotValidDirectory   = errors.New("Current directory is not valid")
 )
 
 type Shell struct {
 	reader   *bufio.Reader
+	user     user.User
+	database *gorm.DB
 	commands map[string]command.Command
+	history  map[string]int
 	rootDir  string
 	stdin    io.Reader
 	stdout   io.Writer
 	stderr   io.Writer
+	debugCtr int
 }
 
 type std struct {
@@ -36,40 +45,52 @@ type redirect struct {
 	stderr *std
 }
 
-// New creates a new shell instance
 func New() *Shell {
+	rootDir, err := utils.CurrentPwd()
+	if err != nil {
+		return &Shell{}
+	}
 	sh := &Shell{
+		user:     user.User{Username: ""},
+		database: db.GetDB(),
 		reader:   bufio.NewReader(os.Stdin),
 		commands: make(map[string]command.Command),
+		history:  make(map[string]int),
+		debugCtr: 0,
+		rootDir:  rootDir,
 	}
-	// Register the exit command
-	exitCmd := command.NewExitCommand()
+	exitCmd := command.NewExitCommand(sh.database, &sh.user)
 	sh.registerCommand(exitCmd)
 
-	// Register the echo command
 	echoCmd := command.NewEchoCommand()
 	sh.registerCommand(echoCmd)
 
-	// Register the cat command
 	catCmd := command.NewCatCommand()
 	sh.registerCommand(catCmd)
 
-	// Register the pwd command
 	pwdCmd := command.NewPwdCommand()
 	sh.registerCommand(pwdCmd)
 
-	// Register the cd command
 	cdCmd := command.NewCDCommand(sh.rootDir)
 	sh.registerCommand(cdCmd)
 
-	// Register the ls command
 	lsCmd := command.NewLSCommand()
 	sh.commands[lsCmd.Name()] = lsCmd
 
-	// Register the color command
 	colorCmd := command.NewColorCommand()
 	sh.commands[colorCmd.Name()] = colorCmd
-	// Register the type command
+
+	loginCmd := command.NewLoginCommand(sh.database, &sh.user)
+	sh.commands[loginCmd.Name()] = loginCmd
+
+	adduserCmd := command.NewAddUserCommand(sh.database, &sh.user)
+	sh.commands[adduserCmd.Name()] = adduserCmd
+
+	logoutCmd := command.NewLogoutCommand(sh.database, &sh.user)
+	sh.commands[logoutCmd.Name()] = logoutCmd
+
+	historyCmd := command.NewHistoryCommand(&sh.history, &sh.user, sh.database)
+	sh.commands[historyCmd.Name()] = historyCmd
 
 	shellBuiltins := []string{}
 	for cmd := range sh.commands {
@@ -82,6 +103,9 @@ func New() *Shell {
 	sh.commands["pwd"].Execute([]string{}, stdout)
 	sh.rootDir = stdout.String()
 
+	// if err := utils.ClearAndFillHistoryWithMockData(sh.database); err != nil {
+	// 	log.Fatalf("Error clearing and filling history: %v", err)
+	// }
 	return sh
 }
 
@@ -89,25 +113,18 @@ func (s *Shell) registerCommand(cmd command.Command) {
 	s.commands[cmd.Name()] = cmd
 }
 
-// Start begins the shell's read-eval-print loop
 func (s *Shell) Start() error {
 	for {
 		if err := s.printPrompt(); err != nil {
 			return err
 		}
-
-		// read inpug line
 		input, err := s.readInput()
 		if err != nil {
 			return err
 		}
-
-		// Handle empty input
 		if input == "" {
 			continue
 		}
-
-		// Process the command and write errors
 		if stderr, err := s.executeCommand(input); err != nil {
 			if stderr.isRedirected {
 				defer stderr.std.Close()
@@ -135,33 +152,35 @@ func (s *Shell) printPrompt() error {
 		return err
 	}
 	addr := utils.HandleAdress(s.rootDir, currentDir)
-
-	currendDir := fmt.Sprintf("%s$ ", addr)
+	user := s.user.Username
 	if utils.IsColor() {
-		currendDir = utils.ColorText(currendDir, utils.TextBlue)
+		addr = utils.ColorText(addr, utils.TextBlue)
+		user = utils.ColorText(s.user.Username, utils.TextGreen)
 	}
-	_, err = fmt.Fprintf(os.Stdout, "%s", currendDir)
+	if s.user.Username != "" {
+		_, err = fmt.Fprintf(os.Stdout, "%s:%s$ ", user, addr)
+	} else {
+		_, err = fmt.Fprintf(os.Stdout, "%s$ ", addr)
+	}
 	return err
 }
 
-// readInput reads a line of input from the user
 func (s *Shell) readInput() (string, error) {
 	input, err := s.reader.ReadString('\n')
 	if err != nil {
 		return "", err
 	}
-	// input := "echo 'hello \"mom\"    world'  hello \"hi    'dad'   there    !\""
-	// input := "echo 'home'"
-	// input := "echo 'hello    \"world\" is nice ' sds     jlsd  \"      x is       here     \" ok"
-	// input := "echo 'hello    \"world\" is nice ' sds     jlsd  \"      x is       here     \" ok\""
-	// input := "echo '\"hello\"'"
-	// Trim whitespace and newline
 	return strings.TrimSpace(input), nil
 }
 
-// executeCommand processes the input command (currently just echoes it)
 func (s *Shell) executeCommand(input string) (*std, error) {
 	cmd, args, redirects, err := s.parseCommand(input)
+	if s.user.Username != "" {
+		s.user.HistoryMap[input]++
+		// err := user.Update(s.database, &s.user) // too insufficient but most reliable
+	} else {
+		s.history[input]++
+	}
 	if err != nil {
 		return redirects.stderr, err
 	}
@@ -184,7 +203,6 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 		return redirects.stderr, ErrCommandNotSupported
 	}
 
-	// system commands
 	if err := s.executeSystemCommand(cmd, args); err != nil {
 		return redirects.stderr, ErrCommandNotSupported
 	}
@@ -193,19 +211,16 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 }
 
 func (s *Shell) executeSystemCommand(name string, args []string) error {
-	// Use type command to find the executable path
 	execPath, err := utils.FindCommand(name)
 	if err != nil {
 		return err
 	}
 	if utils.HasPrefix(execPath, "$builtin") {
-		execPath = strings.Split(execPath, ":")[1] // seperate builtin command
+		execPath = strings.Split(execPath, ":")[1]
 	}
 
-	// Create and execute the system command with the full path
 	cmd := exec.Command(execPath, args...)
 
-	// Execute the command
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to execute %s: %v", name, err)
@@ -214,16 +229,18 @@ func (s *Shell) executeSystemCommand(name string, args []string) error {
 	return nil
 }
 
-// parseCommand splits the input into command and arguments
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
+	var quotes []string
 	redirects := &redirect{stdout: &std{os.Stdout, false}, stderr: &std{os.Stderr, false}}
-	quotes, err1 := utils.ExtractQuotes(input)
-	fields := utils.Seperate(input, quotes)
-
+	parsedArg, err1 := utils.ParseArgs(input)
+	if err1 != nil {
+		return "", nil, redirects, nil
+	}
+	quotes, err1 = utils.ExtractQuotes(parsedArg)
+	fields := utils.Seperate(parsedArg, quotes)
 	if len(fields) == 0 {
 		return "", nil, redirects, nil
 	}
-
 	// Parse redirection
 	args, redir, err := redirection.ParseRedirection(fields[1:])
 	if err != nil {
@@ -235,7 +252,7 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 		if err != nil {
 			return "", nil, redirects, err
 		}
-		// Set appropriate output
+		// Set appropriate output & error
 		switch redir.Type {
 		case redirection.OutputRedirect, redirection.OutputAppend:
 			redirects.stdout.std = file

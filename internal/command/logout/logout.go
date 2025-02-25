@@ -1,7 +1,8 @@
-package command
+package logout
 
 import (
 	user "asa/shell/internal/service"
+	"asa/shell/utils"
 	"io"
 
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (c *LogoutCommand) Name() string {
 
 func (c *LogoutCommand) Execute(args []string, stdout io.Writer) error {
 	if len(args) > 1 {
-		return ErrInvalidArgs
+		return utils.ErrInvalidArgs
 	}
 
 	err := user.Update(c.db, c.user)

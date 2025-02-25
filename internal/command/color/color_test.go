@@ -1,4 +1,4 @@
-package command
+package color
 
 import (
 	"asa/shell/utils"
@@ -160,31 +160,30 @@ func TestColorBuiltins(t *testing.T) {
 // TestColorFormatting tests the actual visual formatting of text
 func TestColorFormatting(t *testing.T) {
 	tests := []struct {
-        name     string
-        text     string
-        formats  []string
-        expected string
-    }{
-        {
-            name:     "bold red text",
-            text:     "error",
-            formats:  []string{utils.Bold, utils.TextRed},
-            expected: utils.Bold + utils.TextRed + "error" + utils.Reset,
-        },
-        {
-            name:     "underlined blue text with white background",
-            text:     "info",
-            formats:  []string{utils.Underline, utils.TextBlue, utils.BgWhite},
-            expected: utils.Underline + utils.TextBlue + utils.BgWhite + "info" + utils.Reset,
-        },
-        {
-            name:     "blinking yellow text",
-            text:     "warning",
-            formats:  []string{utils.Blink, utils.TextYellow},
-            expected: utils.Blink + utils.TextYellow + "warning" + utils.Reset,
-        },
-    }
-
+		name     string
+		text     string
+		formats  []string
+		expected string
+	}{
+		{
+			name:     "bold red text",
+			text:     "error",
+			formats:  []string{utils.Bold, utils.TextRed},
+			expected: utils.Bold + utils.TextRed + "error" + utils.Reset,
+		},
+		{
+			name:     "underlined blue text with white background",
+			text:     "info",
+			formats:  []string{utils.Underline, utils.TextBlue, utils.BgWhite},
+			expected: utils.Underline + utils.TextBlue + utils.BgWhite + "info" + utils.Reset,
+		},
+		{
+			name:     "blinking yellow text",
+			text:     "warning",
+			formats:  []string{utils.Blink, utils.TextYellow},
+			expected: utils.Blink + utils.TextYellow + "warning" + utils.Reset,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

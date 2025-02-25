@@ -1,7 +1,8 @@
-package command
+package adduser
 
 import (
 	user "asa/shell/internal/service"
+	"asa/shell/utils"
 	"io"
 
 	"gorm.io/gorm"
@@ -11,7 +12,6 @@ type AddUserCommand struct {
 	db   *gorm.DB
 	user *user.User
 }
-
 
 func NewAddUserCommand(db *gorm.DB, user *user.User) *AddUserCommand {
 	return &AddUserCommand{
@@ -26,10 +26,10 @@ func (c *AddUserCommand) Name() string {
 
 func (c *AddUserCommand) Execute(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
-		return ErrUsernameRequired
+		return utils.ErrUsernameRequired
 	}
 	if len(args) > 2 {
-		return ErrInvalidArgs
+		return utils.ErrInvalidArgs
 	}
 	var pass string
 	if len(args) == 2 {

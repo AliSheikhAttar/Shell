@@ -1,4 +1,4 @@
-package command
+package cd
 
 import (
 	"asa/shell/utils"
@@ -70,7 +70,7 @@ func (c *CDCommand) Execute(args []string, stdout io.Writer) error {
 			}
 		}
 	default:
-		return ErrTooManyArgs
+		return utils.ErrTooManyArgs
 	}
 
 	// Try to change directory

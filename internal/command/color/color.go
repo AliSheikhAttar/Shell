@@ -1,16 +1,9 @@
-package command
+package color
 
 import (
-	"errors"
+	"asa/shell/utils"
 	"io"
 	"os"
-)
-
-var (
-	ErrNotEnoughArgs = errors.New("not Enough Arguments")
-	ErrUnvalidArg    = errors.New("unvalid Argument")
-	ErrColorUnset    = errors.New("color is not set")
-	ErrColorWrong    = errors.New("something went wrong, couldn't color your shell")
 )
 
 // CDCommand implements the 'cd' built-in command
@@ -34,7 +27,7 @@ func (c *ColorCommand) Name() string {
 func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
 	switch len(args) {
 	case 0:
-		return ErrNotEnoughArgs
+		return utils.ErrNotEnoughArgs
 	case 1:
 		if args[0] == "off" {
 			return c.unSet()
@@ -42,16 +35,16 @@ func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
 		if args[0] == "on" {
 			return c.set()
 		}
-		return ErrUnvalidArg
+		return utils.ErrUnvalidArg
 	default:
-		return ErrTooManyArgs
+		return utils.ErrTooManyArgs
 	}
 }
 
 func (c *ColorCommand) unSet() error {
 
 	if _, ok := os.LookupEnv(c.envVar); !ok {
-		return ErrColorUnset
+		return utils.ErrColorUnset
 	}
 	os.Unsetenv(c.envVar)
 	return nil
@@ -60,7 +53,7 @@ func (c *ColorCommand) set() error {
 
 	err := os.Setenv(c.envVar, "1")
 	if err != nil {
-		return ErrColorWrong
+		return utils.ErrColorWrong
 	}
 	return nil
 }

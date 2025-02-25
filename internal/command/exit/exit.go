@@ -1,7 +1,8 @@
-package command
+package exit
 
 import (
 	user "asa/shell/internal/service"
+	"asa/shell/utils"
 	"fmt"
 	"io"
 	"os"
@@ -46,12 +47,12 @@ func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
 		}
 		status, err := strconv.Atoi(args[0])
 		if err != nil {
-			return ErrInvalidArgs
+			return utils.ErrInvalidArgs
 		}
 		fmt.Fprintln(stdout, "exit status ", status)
 		os.Exit(0)
 	default:
-		return ErrTooManyArgs
+		return utils.ErrTooManyArgs
 	}
 	return nil
 }

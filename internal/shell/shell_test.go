@@ -1,7 +1,7 @@
 package shell
 
 import (
-	"asa/shell/internal/command"
+	"asa/shell/internal/command/pwd"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -430,7 +430,7 @@ func TestShell_PwdCommand(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 	sh := createTestShellWithStdin(nil, stdout, nil)
-	sh.registerCommand(command.NewPwdCommand())
+	sh.registerCommand(pwd.NewPwdCommand())
 	_, err = sh.executeCommand("pwd")
 	if err != nil {
 		t.Errorf("Shell.executeCommand() error = %v", err)

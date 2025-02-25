@@ -1,6 +1,7 @@
-package command
+package ls
 
 import (
+	"asa/shell/utils"
 	"fmt"
 	"io"
 	"io/fs"
@@ -61,7 +62,7 @@ func (c *LSCommand) parseArgs(args []string) (string, error) {
 		} else {
 			// Process directory path
 			if dirPath != "" {
-				return "", ErrTooManyArgs
+				return "", utils.ErrTooManyArgs
 			}
 			dirPath = arg
 		}

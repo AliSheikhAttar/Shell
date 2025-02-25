@@ -1,4 +1,4 @@
-package command
+package cat
 
 import (
     "os"

@@ -1,6 +1,7 @@
-package command
+package cd
 
 import (
+	"asa/shell/utils"
 	"os"
 	"path/filepath"
 	"testing"
@@ -66,7 +67,7 @@ func TestCDCommand(t *testing.T) {
 		{
 			name:    "too many arguments",
 			args:    []string{"dir1", "dir2"},
-			wantErr: ErrTooManyArgs,
+			wantErr: utils.ErrTooManyArgs,
 		},
 		{
 			name:    "non-existent directory",

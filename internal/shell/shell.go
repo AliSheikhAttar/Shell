@@ -2,6 +2,18 @@ package shell
 
 import (
 	"asa/shell/internal/command"
+	"asa/shell/internal/command/adduser"
+	"asa/shell/internal/command/cat"
+	"asa/shell/internal/command/cd"
+	"asa/shell/internal/command/color"
+	"asa/shell/internal/command/echo"
+	"asa/shell/internal/command/exit"
+	"asa/shell/internal/command/history"
+	"asa/shell/internal/command/login"
+	"asa/shell/internal/command/logout"
+	"asa/shell/internal/command/ls"
+	"asa/shell/internal/command/pwd"
+	typecmd "asa/shell/internal/command/type"
 	db "asa/shell/internal/database"
 	"asa/shell/internal/redirection"
 	user "asa/shell/internal/service"
@@ -59,44 +71,44 @@ func New() *Shell {
 		debugCtr: 0,
 		rootDir:  rootDir,
 	}
-	exitCmd := command.NewExitCommand(sh.database, &sh.user)
+	exitCmd := exit.NewExitCommand(sh.database, &sh.user)
 	sh.registerCommand(exitCmd)
 
-	echoCmd := command.NewEchoCommand()
+	echoCmd := echo.NewEchoCommand()
 	sh.registerCommand(echoCmd)
 
-	catCmd := command.NewCatCommand()
+	catCmd := cat.NewCatCommand()
 	sh.registerCommand(catCmd)
 
-	pwdCmd := command.NewPwdCommand()
+	pwdCmd := pwd.NewPwdCommand()
 	sh.registerCommand(pwdCmd)
 
-	cdCmd := command.NewCDCommand(sh.rootDir)
+	cdCmd := cd.NewCDCommand(sh.rootDir)
 	sh.registerCommand(cdCmd)
 
-	lsCmd := command.NewLSCommand()
+	lsCmd := ls.NewLSCommand()
 	sh.commands[lsCmd.Name()] = lsCmd
 
-	colorCmd := command.NewColorCommand()
+	colorCmd := color.NewColorCommand()
 	sh.commands[colorCmd.Name()] = colorCmd
 
-	loginCmd := command.NewLoginCommand(sh.database, &sh.user)
+	loginCmd := login.NewLoginCommand(sh.database, &sh.user)
 	sh.commands[loginCmd.Name()] = loginCmd
 
-	adduserCmd := command.NewAddUserCommand(sh.database, &sh.user)
+	adduserCmd := adduser.NewAddUserCommand(sh.database, &sh.user)
 	sh.commands[adduserCmd.Name()] = adduserCmd
 
-	logoutCmd := command.NewLogoutCommand(sh.database, &sh.user)
+	logoutCmd := logout.NewLogoutCommand(sh.database, &sh.user)
 	sh.commands[logoutCmd.Name()] = logoutCmd
 
-	historyCmd := command.NewHistoryCommand(&sh.history, &sh.user, sh.database)
+	historyCmd := history.NewHistoryCommand(&sh.history, &sh.user, sh.database)
 	sh.commands[historyCmd.Name()] = historyCmd
 
 	shellBuiltins := []string{}
 	for cmd := range sh.commands {
 		shellBuiltins = append(shellBuiltins, cmd)
 	}
-	typeCmd := command.NewTypeCommand(shellBuiltins)
+	typeCmd := typecmd.NewTypeCommand(shellBuiltins)
 	sh.registerCommand(typeCmd)
 
 	stdout := &bytes.Buffer{}
@@ -175,12 +187,15 @@ func (s *Shell) readInput() (string, error) {
 
 func (s *Shell) executeCommand(input string) (*std, error) {
 	cmd, args, redirects, err := s.parseCommand(input)
-	if s.user.Username != "" {
-		s.user.HistoryMap[input]++
-		// err := user.Update(s.database, &s.user) // too insufficient but most reliable
-	} else {
-		s.history[input]++
+	if cmd != "history" {
+		if s.user.Username != "" {
+			s.user.HistoryMap[input]++
+			// err := user.Update(s.database, &s.user) // too insufficient but most reliable
+		} else {
+			s.history[input]++
+		}
 	}
+
 	if err != nil {
 		return redirects.stderr, err
 	}

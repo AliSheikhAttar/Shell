@@ -1,17 +1,11 @@
-package command
+package login
 
 import (
 	userService "asa/shell/internal/service"
-	"errors"
+	"asa/shell/utils"
 	"io"
 
 	"gorm.io/gorm"
-)
-
-var (
-	ErrUsernameRequired = errors.New("username required")
-	ErrUserAlreadyExist = errors.New("user already exist")
-	ErrLoggedin         = errors.New("a user is currently logged in to shell")
 )
 
 type LoginCommand struct {
@@ -35,10 +29,10 @@ func (c *LoginCommand) Execute(args []string, stdout io.Writer) error {
 	// 	return ErrLoggedin
 	// }
 	if len(args) == 0 {
-		return ErrUsernameRequired
+		return utils.ErrUsernameRequired
 	}
 	if len(args) > 2 {
-		return ErrInvalidArgs
+		return utils.ErrInvalidArgs
 	}
 	var pass string
 	if len(args) == 2 {

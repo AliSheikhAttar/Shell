@@ -20,7 +20,16 @@ var (
 	ErrPwdWentWrong         = errors.New("something went wrong while trying to identify current dir")
 	ErrInvalidQuotedArg     = errors.New("invalid Quoted arg")
 	ErrInvalidValue         = errors.New("corresponding value is not stored correctly")
-	ErrEmptyHistory         = errors.New("history is empty")
+	ErrUsernameRequired     = errors.New("username required")
+	ErrUserAlreadyExist     = errors.New("user already exist")
+	ErrLoggedin             = errors.New("a user is currently logged in to shell")
+	ErrTooManyArgs          = errors.New("too many arguments")
+	ErrInvalidArgs          = errors.New("invalid arguments")
+	ErrEmptyHistory         = errors.New("empty command history")
+	ErrNotEnoughArgs        = errors.New("not Enough Arguments")
+	ErrUnvalidArg           = errors.New("unvalid Argument")
+	ErrColorUnset           = errors.New("color is not set")
+	ErrColorWrong           = errors.New("something went wrong, couldn't color your shell")
 )
 
 var LinuxBuiltins = map[string]bool{

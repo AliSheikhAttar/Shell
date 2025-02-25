@@ -1,4 +1,4 @@
-package command
+package history
 
 import (
 	user "asa/shell/internal/service"
@@ -28,11 +28,11 @@ func (h *HistoryCommand) Name() string {
 
 func (h *HistoryCommand) Execute(args []string, stdout io.Writer) error {
 	if len(args) > 1 {
-		return ErrInvalidArgs
+		return utils.ErrInvalidArgs
 	}
 	if len(args) == 1 {
 		if args[0] != "clean" {
-			return ErrInvalidArgs
+			return utils.ErrInvalidArgs
 		}
 		if h.user.Username != "" {
 			h.user.HistoryMap = map[string]int{}
@@ -43,10 +43,15 @@ func (h *HistoryCommand) Execute(args []string, stdout io.Writer) error {
 		return nil
 	}
 	if h.user.Username != "" {
+		if len(h.user.HistoryMap) == 0 {
+			return utils.ErrEmptyHistory
+		}
 		utils.PrintSortedMap(h.user.HistoryMap, stdout)
 		return nil
 	}
-
+	if len(*h.builtinHistory) == 0 {
+		return utils.ErrEmptyHistory
+	}
 	utils.PrintSortedMap(*h.builtinHistory, stdout)
 	return nil
 }

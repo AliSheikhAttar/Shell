@@ -60,7 +60,7 @@ func GetUser(db *gorm.DB, username string, password string) (User, error) {
 		}
 		return user, err
 	}
-	if password != "" && user.Password != password {
+	if user.Password != "" && user.Password != password {
 		return user, ErrWrongPassword
 	}
 

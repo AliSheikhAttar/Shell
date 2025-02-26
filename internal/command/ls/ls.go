@@ -45,7 +45,8 @@ func (c *LSCommand) Execute(args []string, stdout io.Writer) error {
 // parseArgs processes command line arguments and returns the target directory
 func (c *LSCommand) parseArgs(args []string) (string, error) {
 	var dirPath string
-
+	c.showAll = false
+	c.longFormat = false
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "-") {
 			// Process options

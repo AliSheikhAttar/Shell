@@ -33,20 +33,6 @@ var (
 	ErrMissingCommandName   = errors.New("type: missing command name")
 )
 
-var LinuxBuiltins = map[string]bool{
-	"mkdir":   true,
-	"touch":   true,
-	"export":  true,
-	"source":  true,
-	"alias":   true,
-	"unalias": true,
-	"set":     true,
-	"unset":   true,
-	"exec":    true,
-	"command": true,
-	".":       true,
-}
-
 const (
 	// Text colors
 	TextBlack   = "\033[30m"
@@ -92,12 +78,6 @@ func IsColor() bool {
 }
 
 func FindCommand(cmd string) (string, error) {
-	// Check if it's a built-in command
-	builtins := LinuxBuiltins
-
-	if builtins[cmd] {
-		return fmt.Sprintf("$builtin:%s", cmd), nil
-	}
 
 	// if executable file
 	if strings.Contains(cmd, "/") {

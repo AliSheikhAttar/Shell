@@ -69,13 +69,13 @@
 				
 				<option value="file6">asa/shell/internal/command/help/help.go (100.0%)</option>
 				
-				<option value="file7">asa/shell/internal/command/history/history.go (0.0%)</option>
+				<option value="file7">asa/shell/internal/command/history/history.go (100.0%)</option>
 				
 				<option value="file8">asa/shell/internal/command/login/login.go (86.4%)</option>
 				
 				<option value="file9">asa/shell/internal/command/logout/logout.go (100.0%)</option>
 				
-				<option value="file10">asa/shell/internal/command/ls/ls.go (90.0%)</option>
+				<option value="file10">asa/shell/internal/command/ls/ls.go (90.5%)</option>
 				
 				<option value="file11">asa/shell/internal/command/pwd/pwd.go (60.0%)</option>
 				
@@ -85,9 +85,9 @@
 				
 				<option value="file14">asa/shell/internal/redirection/redirection.go (90.7%)</option>
 				
-				<option value="file15">asa/shell/internal/service/user.go (81.2%)</option>
+				<option value="file15">asa/shell/internal/service/user.go (82.0%)</option>
 				
-				<option value="file16">asa/shell/internal/shell/shell.go (66.1%)</option>
+				<option value="file16">asa/shell/internal/shell/shell.go (66.4%)</option>
 				
 				</select>
 			</div>
@@ -453,37 +453,44 @@ func NewHelpCommand() *HelpCommand <span class="cov8" title="1">{
 }</span>
 
 func (c *HelpCommand) Name() string <span class="cov8" title="1">{
-        return "--help"
+        return "help"
 }</span>
 
 func (c *HelpCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
         if len(args) &gt; 0 </span><span class="cov8" title="1">{
                 return utils.ErrInvalidArgs
         }</span>
-        <span class="cov8" title="1">commands := map[string]string{
-                "color":   "set on/off color mode",
-                "cat":     "see the content of the files",
-                "ls":      "see the content of the directory",
-                "cd":      "change your directory",
-                "echo":    "write text/variables to output",
-                "type":    "type of a command",
-                "pwd":     "current directory path",
-                "exit":    "exit the shell",
-                "history": "history of executed commands",
-                "adduser": "register user to shell",
-                "login":   "login to shell as user",
-                "logout":  "logout the shell",
+        // Updated map to include usage for each command
+        <span class="cov8" title="1">commands := map[string][2]string{
+                
+                "cd":      {"change your directory", "cd &lt;path&gt;"},
+                "ls":      {"see the content of the directory", "ls [options]"},
+                "cat":     {"see the content of the files", "cat &lt;filename&gt;"},
+                "pwd":     {"current directory path", "pwd"},
+                "type":    {"type of a command", "type &lt;command&gt;"},
+                "adduser": {"register user to shell", "adduser {username} {password | empty}"},
+                "echo":    {"write text/variables to output", "echo &lt;text&gt;"},
+                "login":   {"login to shell as user", "login {username} {password | empty}"},
+                "logout":  {"logout the shell", "logout"},
+                "exit":    {"exit the shell", "exit [status code]"},
+                "color":   {"set on/off color mode", "color [on|off]"},
+                "history": {"history of executed commands", "history | history clean"},
         }
-        fmt.Fprintln(stdout, "---------------------------------------------------")
+
+        fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
+        // Adding the new "Usage" header
         coloredCommand := utils.ColorText("Command", utils.TextBlue, utils.Bold)
         coloredDescription := utils.ColorText("Description", utils.TextBlue, utils.Bold)
-        fmt.Fprintf(stdout, "|   %s   |             %s           |\n", coloredCommand, coloredDescription)
-        fmt.Fprintln(stdout, "---------------------------------------------------")
+        coloredUsage := utils.ColorText("Usage", utils.TextBlue, utils.Bold)
+        // Format now includes the "Usage" column
+        fmt.Fprintf(stdout, "|   %s   |             %s           |           %s                       |\n", coloredCommand, coloredDescription, coloredUsage)
+        fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
         for key, val := range commands </span><span class="cov8" title="1">{
                 coloredKey := utils.ColorText(key, utils.TextYellow)
-                fmt.Fprintf(stdout, "| %-20s | %-42s |\n", coloredKey, utils.ColorText(val, utils.TextMagenta))
+                // The third element (val[1]) is the "Usage" information
+                fmt.Fprintf(stdout, "| %-20s | %-42s | %-46s |\n", coloredKey, utils.ColorText(val[0], utils.TextMagenta), utils.ColorText(val[1], utils.TextCyan))
         }</span>
-        <span class="cov8" title="1">fmt.Fprintln(stdout, "---------------------------------------------------")
+        <span class="cov8" title="1">fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
         return nil</span>
 }
 </pre>
@@ -504,7 +511,7 @@ type HistoryCommand struct {
         db             *gorm.DB
 }
 
-func NewHistoryCommand(builtinHistory *map[string]int, user *user.User, db *gorm.DB) *HistoryCommand <span class="cov0" title="0">{
+func NewHistoryCommand(builtinHistory *map[string]int, user *user.User, db *gorm.DB) *HistoryCommand <span class="cov8" title="1">{
         return &amp;HistoryCommand{
                 builtinHistory: builtinHistory,
                 user:           user,
@@ -512,37 +519,37 @@ func NewHistoryCommand(builtinHistory *map[string]int, user *user.User, db *gorm
         }
 }</span>
 
-func (h *HistoryCommand) Name() string <span class="cov0" title="0">{
+func (h *HistoryCommand) Name() string <span class="cov8" title="1">{
         return "history"
 }</span>
 
-func (h *HistoryCommand) Execute(args []string, stdout io.Writer) error <span class="cov0" title="0">{
-        if len(args) &gt; 1 </span><span class="cov0" title="0">{
+func (h *HistoryCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        if len(args) &gt; 1 </span><span class="cov8" title="1">{
                 return utils.ErrInvalidArgs
         }</span>
-        <span class="cov0" title="0">if len(args) == 1 </span><span class="cov0" title="0">{
-                if args[0] != "clean" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if len(args) == 1 </span><span class="cov8" title="1">{
+                if args[0] != "clean" </span><span class="cov8" title="1">{
                         return utils.ErrInvalidArgs
                 }</span>
-                <span class="cov0" title="0">if h.user.Username != "" </span><span class="cov0" title="0">{
+                <span class="cov8" title="1">if h.user.Username != "" </span><span class="cov8" title="1">{
                         h.user.HistoryMap = map[string]int{}
                         err := user.Update(h.db, h.user)
                         return err
                 }</span>
-                <span class="cov0" title="0">*h.builtinHistory = map[string]int{}
+                <span class="cov8" title="1">*h.builtinHistory = map[string]int{}
                 return nil</span>
         }
-        <span class="cov0" title="0">if h.user.Username != "" </span><span class="cov0" title="0">{
-                if len(h.user.HistoryMap) == 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if h.user.Username != "" </span><span class="cov8" title="1">{
+                if len(h.user.HistoryMap) == 0 </span><span class="cov8" title="1">{
                         return utils.ErrEmptyHistory
                 }</span>
-                <span class="cov0" title="0">utils.PrintSortedMap(h.user.HistoryMap, stdout)
+                <span class="cov8" title="1">utils.PrintSortedMap(h.user.HistoryMap, stdout)
                 return nil</span>
         }
-        <span class="cov0" title="0">if len(*h.builtinHistory) == 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if len(*h.builtinHistory) == 0 </span><span class="cov8" title="1">{
                 return utils.ErrEmptyHistory
         }</span>
-        <span class="cov0" title="0">utils.PrintSortedMap(*h.builtinHistory, stdout)
+        <span class="cov8" title="1">utils.PrintSortedMap(*h.builtinHistory, stdout)
         return nil</span>
 }
 </pre>
@@ -697,7 +704,8 @@ func (c *LSCommand) Execute(args []string, stdout io.Writer) error <span class="
 // parseArgs processes command line arguments and returns the target directory
 func (c *LSCommand) parseArgs(args []string) (string, error) <span class="cov8" title="1">{
         var dirPath string
-
+        c.showAll = false
+        c.longFormat = false
         for _, arg := range args </span><span class="cov8" title="1">{
                 if strings.HasPrefix(arg, "-") </span><span class="cov8" title="1">{
                         // Process options
@@ -961,13 +969,6 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) <span class
         if len(args) == 0 </span><span class="cov0" title="0">{
                 return args, nil, nil
         }</span>
-        // for _, initQuote := range initialQuotes {
-        //         for i := 0; i &lt; len(initQuote); i++ {
-        //                 if string(initQuote[i]) == "&gt;" {
-        //                         return args, nil, nil
-        //                 }
-        //         }
-        // }
         <span class="cov8" title="1">for i, arg := range args </span><span class="cov8" title="1">{
                 switch </span>{
                 case arg == "&gt;":<span class="cov8" title="1">
@@ -1083,7 +1084,7 @@ var (
         ErrWrongPassword    = errors.New("wrong password")
         ErrDuplicateUser    = errors.New("duplicate user exists with this username")
         ErrUserNotFound     = errors.New("user not found")
-
+        ErrPassRequired     = errors.New("password required")
 )
 
 func RegisterUser(db *gorm.DB, user *User) error <span class="cov8" title="1">{
@@ -1128,9 +1129,12 @@ func GetUser(db *gorm.DB, username string, password string) (User, error) <span 
                 }</span>
                 <span class="cov0" title="0">return user, err</span>
         }
-        <span class="cov8" title="1">if password != "" &amp;&amp; user.Password != password </span><span class="cov8" title="1">{
-                return user, ErrWrongPassword
-        }</span>
+        <span class="cov8" title="1">if user.Password != "" &amp;&amp; user.Password != password </span><span class="cov8" title="1">{
+                if password == "" </span><span class="cov8" title="1">{
+                        return user, ErrPassRequired
+                }</span>
+                <span class="cov8" title="1">return user, ErrWrongPassword</span>
+        }
 
         <span class="cov8" title="1">var historyMap map[string]int
         err := json.Unmarshal([]byte(user.History), &amp;historyMap)
@@ -1224,8 +1228,8 @@ type std struct {
         isRedirected bool
 }
 type redirect struct {
-        stdout *std
-        stderr *std
+        stdout    *std
+        stderr    *std
         redirType redirection.RedirectionType
 }
 
@@ -1234,6 +1238,12 @@ func New() *Shell <span class="cov8" title="1">{
         if err != nil </span><span class="cov0" title="0">{
                 return &amp;Shell{}
         }</span>
+
+        <span class="cov8" title="1">err = db.GetDB().AutoMigrate(&amp;user.User{})
+        if err != nil </span><span class="cov0" title="0">{
+                fmt.Println("Error migrating database:", err)
+        }</span>
+
         <span class="cov8" title="1">sh := &amp;Shell{
                 user:     user.User{Username: ""},
                 database: db.GetDB(),
@@ -1387,11 +1397,6 @@ func (s *Shell) executeCommand(input string) (*std, error) <span class="cov8" ti
                 <span class="cov8" title="1">return redirects.stderr, nil</span>
         }
 
-        // linux builtin command not implemented
-        <span class="cov8" title="1">if _, isExist := utils.LinuxBuiltins[cmd]; isExist </span><span class="cov0" title="0">{
-                return redirects.stderr, ErrCommandNotSupported
-        }</span>
-
         <span class="cov8" title="1">if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil </span><span class="cov8" title="1">{
                 return redirects.stderr, ErrCommandNotSupported
         }</span>
@@ -1422,16 +1427,11 @@ func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Write
 }
 
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) <span class="cov8" title="1">{
-        // var quotes []string
-        // var quotes1 []string
         redirects := &amp;redirect{stdout: &amp;std{os.Stdout, false}, stderr: &amp;std{os.Stderr, false}}
         parsedArg, err1 := utils.ParseArgs(input)
         if err1 != nil </span><span class="cov0" title="0">{
                 return "", nil, redirects, nil
         }</span>
-        // quotes1, _ = utils.ExtractQuotes(input)
-        // quotes, err1 = utils.ExtractQuotes(parsedArg)
-        // fields := utils.Seperate(parsedArg, quotes)
         <span class="cov8" title="1">if len(parsedArg) == 0 </span><span class="cov8" title="1">{
                 return "", nil, redirects, nil
         }</span>
@@ -1458,7 +1458,7 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
                 <span class="cov8" title="1">redirects.redirType = redir.Type</span>
         }
         // for case : &gt; file3 cat file2
-        <span class="cov8" title="1">if parsedArg[0][0] != '&gt;' </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">if parsedArg[0][0] != '&gt;' &amp;&amp; parsedArg[0][0] != '2' </span><span class="cov8" title="1">{
                 return parsedArg[0], args[1:], redirects, err1
         }</span> else<span class="cov8" title="1"> {
                 return parsedArg[2], args, redirects, err1

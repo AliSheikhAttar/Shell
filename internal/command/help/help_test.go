@@ -10,7 +10,7 @@ import (
 
 func TestHelpCommand_Name(t *testing.T) {
 	cmd := NewHelpCommand()
-	if cmd.Name() != "--help" {
+	if cmd.Name() != "help" {
 		t.Errorf("Name() should return '--help', but got '%s'", cmd.Name())
 	}
 }

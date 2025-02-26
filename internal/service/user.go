@@ -15,7 +15,7 @@ var (
 	ErrWrongPassword    = errors.New("wrong password")
 	ErrDuplicateUser    = errors.New("duplicate user exists with this username")
 	ErrUserNotFound     = errors.New("user not found")
-
+	ErrPassRequired     = errors.New("password required")
 )
 
 func RegisterUser(db *gorm.DB, user *User) error {
@@ -61,6 +61,9 @@ func GetUser(db *gorm.DB, username string, password string) (User, error) {
 		return user, err
 	}
 	if user.Password != "" && user.Password != password {
+		if password == "" {
+			return user, ErrPassRequired
+		}
 		return user, ErrWrongPassword
 	}
 

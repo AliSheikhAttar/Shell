@@ -119,7 +119,7 @@ func TestGetUser(t *testing.T) {
 			name:       "Successful get user - no password provided",
 			username:   existingUserCorrectPass.Username,
 			password:   "", // No password provided
-			wantErr:    nil,
+			wantErr:    ErrPassRequired,
 			expectUser: true,
 			checkUser: func(user User) bool {
 				return user.Username == existingUserCorrectPass.Username
@@ -186,7 +186,7 @@ func TestUpdate(t *testing.T) {
 	defer cleanupUser(db, baseUser.Username) // Cleanup after tests
 
 	// Retrieve user from DB to have correct ID for updates
-	userForUpdate, err := GetUser(db, baseUser.Username, "")
+	userForUpdate, err := GetUser(db, baseUser.Username, "initialpassword")
 	if err != nil {
 		t.Fatalf("Setup failed: Could not get user for update tests: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestUpdate(t *testing.T) {
 			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "newpassword", HistoryMap: map[string]int{"cmd1": 5, "cmd2": 1}},
 			wantErr: nil,
 			checkUser: func(username string, expectedHistory map[string]int) bool {
-				updatedUser, err := GetUser(db, username, "")
+				updatedUser, err := GetUser(db, username, "newpassword")
 				if err != nil {
 					t.Fatalf("CheckUser failed to GetUser after update: %v", err)
 					return false
@@ -233,7 +233,7 @@ func TestUpdate(t *testing.T) {
 			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password", HistoryMap: map[string]int{}}, // Empty HistoryMap
 			wantErr: nil,
 			checkUser: func(username string, expectedHistory map[string]int) bool {
-				updatedUser, err := GetUser(db, username, "")
+				updatedUser, err := GetUser(db, username, "password")
 				if err != nil {
 					t.Fatalf("CheckUser failed to GetUser after update with empty HistoryMap: %v", err)
 					return false
@@ -250,7 +250,7 @@ func TestUpdate(t *testing.T) {
 			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password_only_update"}, // HistoryMap not set in update struct
 			wantErr: nil,
 			checkUser: func(username string, expectedHistory map[string]int) bool { // Expect original history to be preserved
-				updatedUser, err := GetUser(db, username, "")
+				updatedUser, err := GetUser(db, username, "password_only_update")
 				if err != nil {
 					t.Fatalf("CheckUser failed to GetUser after update without HistoryMap: %v", err)
 					return false

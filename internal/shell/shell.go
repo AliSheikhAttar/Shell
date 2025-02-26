@@ -61,10 +61,10 @@ func New() *Shell {
 		return &Shell{}
 	}
 
-	err = db.GetDB().AutoMigrate(&user.User{}) 
-	if err != nil { 
-		fmt.Println("Error migrating database:", err) 
-	} 
+	err = db.GetDB().AutoMigrate(&user.User{})
+	if err != nil {
+		fmt.Println("Error migrating database:", err)
+	}
 
 	sh := &Shell{
 		user:     user.User{Username: ""},
@@ -219,11 +219,6 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 		return redirects.stderr, nil
 	}
 
-	// linux builtin command not implemented
-	if _, isExist := utils.LinuxBuiltins[cmd]; isExist {
-		return redirects.stderr, ErrCommandNotSupported
-	}
-
 	if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil {
 		return redirects.stderr, ErrCommandNotSupported
 	}
@@ -285,7 +280,7 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 		redirects.redirType = redir.Type
 	}
 	// for case : > file3 cat file2
-	if parsedArg[0][0] != '>' {
+	if parsedArg[0][0] != '>' && parsedArg[0][0] != '2' {
 		return parsedArg[0], args[1:], redirects, err1
 	} else {
 		return parsedArg[2], args, redirects, err1

@@ -187,7 +187,6 @@ drwxr-xr-x     4096 * dir1
 			}
 			defer os.RemoveAll(tempDir)
 
-			// Change current working directory to tempDir for each test case
 			originalDir, err := os.Getwd()
 			if err != nil {
 				t.Fatalf("Failed to get current directory: %v", err)
@@ -195,10 +194,9 @@ drwxr-xr-x     4096 * dir1
 			if err := os.Chdir(tempDir); err != nil {
 				t.Fatalf("Failed to chdir to temp dir: %v", err)
 			}
-			defer os.Chdir(originalDir) // Ensure we always go back to the original directory
+			defer os.Chdir(originalDir) 
 
-			// Debugging: Log the current working directory for EVERY test case
-			currentDir, _ := os.Getwd() // Ignoring error for Getwd() in logging
+			currentDir, _ := os.Getwd() 
 			t.Logf("Test '%s' - Current working directory: %s", tt.name, currentDir)
 			t.Logf("Test '%s' - Temp directory: %s", tt.name, tempDir)
 
@@ -209,7 +207,6 @@ drwxr-xr-x     4096 * dir1
 				}
 			}
 
-			// Modify args to use full paths if directory names are used
 			for i, arg := range tt.args {
 				if arg == "subdir" {
 					tt.args[i] = filepath.Join(tempDir, "subdir")
@@ -223,11 +220,9 @@ drwxr-xr-x     4096 * dir1
 			}
 
 
-			// Capture stdout
 			stdout := &bytes.Buffer{}
 			err = cmd.Execute(tt.args, stdout)
 
-			// Check error
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("Expected error, but got nil")
@@ -236,7 +231,6 @@ drwxr-xr-x     4096 * dir1
 				t.Errorf("Unexpected error: %v", err)
 			}
 
-			// Check output
 			gotOutput := strings.TrimSpace(stdout.String())
 			expectedOutput := strings.TrimSpace(tt.expectedOutput)
 
@@ -246,14 +240,14 @@ drwxr-xr-x     4096 * dir1
 
 				if len(gotLines) != len(expectedLines) {
 					t.Errorf("LSCommand.Execute() output line count = %d, want %d", len(gotLines), len(expectedLines))
-					t.Logf("Got output:\n%s\nExpected output:\n%s", gotOutput, tt.expectedOutput) // Debug output
+					t.Logf("Got output:\n%s\nExpected output:\n%s", gotOutput, tt.expectedOutput) 
 					return
 				}
 				for i := range expectedLines {
-					matched, _ := filepath.Match(expectedLines[i], gotLines[i]) // Use filepath.Match for wildcard matching
+					matched, _ := filepath.Match(expectedLines[i], gotLines[i]) 
 					if !matched {
 						t.Errorf("LSCommand.Execute() output line %d = \n%v\n, want to match pattern \n%v", i, gotLines[i], expectedLines[i])
-						t.Logf("Got output:\n%s\nExpected output:\n%s", gotOutput, tt.expectedOutput) // Debug output
+						t.Logf("Got output:\n%s\nExpected output:\n%s", gotOutput, tt.expectedOutput)
 						return
 					}
 				}

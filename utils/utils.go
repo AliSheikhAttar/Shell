@@ -79,18 +79,15 @@ func IsColor() bool {
 
 func FindCommand(cmd string) (string, error) {
 
-	// if executable file
 	if strings.Contains(cmd, "/") {
-		return cmd, nil // exec files with or without suffix
+		return cmd, nil 
 	}
 
-	// If not built-in, search in PATH
 	path := os.Getenv("PATH")
 	if path == "" {
 		return "", ErrEnvironmentVarNotSet
 	}
 
-	// Search in each directory in PATH
 	dirs := strings.Split(path, ":")
 	for _, dir := range dirs {
 		fullPath := filepath.Join(dir, cmd)
@@ -424,7 +421,7 @@ func ClearAndFillHistoryWithMockData(db *gorm.DB) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal history to JSON for user %s: %w", obj.Username, err)
 		}
-		fmt.Printf("History JSON to be saved for user %s: %s\n", obj.Username, string(historyJSON)) // ADD THIS LINE
+		fmt.Printf("History JSON to be saved for user %s: %s\n", obj.Username, string(historyJSON)) 
 
 		obj.History = string(historyJSON)
 		if err := user.Update(db, &obj); err != nil {

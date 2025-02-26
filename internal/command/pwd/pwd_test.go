@@ -15,45 +15,44 @@ func TestPwdCommand_Execute(t *testing.T) {
 		args           []string
 		expectedOutput string
 		wantErr        error
-		setup          func() (string, string, func()) // Modified setup to return expectedOutput
+		setup          func() (string, string, func()) 
 	}{
 		{
 			name:           "Basic execution",
 			args:           []string{},
-			expectedOutput: "", // Will be set in setup based on temp dir
+			expectedOutput: "",
 			wantErr:        nil,
 			setup: func() (string, string, func()) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
 				expectedOutput := tempDir + "\n"
-				return initialDir, expectedOutput, func() { // Return expectedOutput
+				return initialDir, expectedOutput, func() { 
 					os.Chdir(initialDir)
 				}
 			},
 		},
 		{
 			name:           "No arguments",
-			args:           []string{"extra_arg"}, // Pwd should ignore arguments
-			expectedOutput: "",                    // Will be set in setup based on temp dir
+			args:           []string{"extra_arg"}, 
+			expectedOutput: "",                    
 			wantErr:        nil,
 			setup: func() (string, string, func()) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
 				expectedOutput := tempDir + "\n"
-				return initialDir, expectedOutput, func() { // Return expectedOutput
+				return initialDir, expectedOutput, func() { 
 					os.Chdir(initialDir)
 				}
 			},
 		},
-		// Error case is harder to simulate reliably for pwd itself, as it's very robust.
-		// We'll focus on testing getCurrentDirectory separately for error conditions.
+
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			initialDir, expectedOutput, teardown := tc.setup() // Capture expectedOutput
+			initialDir, expectedOutput, teardown := tc.setup() 
 			defer teardown()
 
 			var outBuf bytes.Buffer
@@ -70,9 +69,8 @@ func TestPwdCommand_Execute(t *testing.T) {
 				t.Errorf("Test case '%s': Unexpected error: %v", tc.name, err)
 			}
 
-			// expectedOutput := tc.expectedOutput // No longer needed, value from setup
 			if expectedOutput == "" {
-				currentDir, _ := os.Getwd() // Get current dir after setup if not provided by setup
+				currentDir, _ := os.Getwd() 
 				expectedOutput = currentDir + "\n"
 			}
 
@@ -81,7 +79,6 @@ func TestPwdCommand_Execute(t *testing.T) {
 				t.Errorf("Test case '%s': Output mismatch:\nexpected:\n'%s'\ngot:\n'%s'", tc.name, expectedOutput, actualOutput)
 			}
 
-			// Verify initial directory was restored (extra safety)
 			os.Chdir(initialDir)
 			currentDirAfterTest, _ := os.Getwd()
 			if currentDirAfterTest != initialDir {
@@ -95,7 +92,7 @@ func TestPwdCommand_Execute(t *testing.T) {
 func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 	testCases := []struct {
 		name           string
-		setup          func() (string, string, func()) // Modified setup to return expectedOutput
+		setup          func() (string, string, func()) 
 		expectedOutput string
 		wantErr        bool
 	}{
@@ -105,12 +102,12 @@ func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
-				expectedOutput := tempDir // Set expectedOutput here
+				expectedOutput := tempDir 
 				return initialDir, expectedOutput, func() {
 					os.Chdir(initialDir)
 				}
 			},
-			expectedOutput: "", // Will be set in setup based on temp dir, now used as default
+			expectedOutput: "", 
 			wantErr:        false,
 		},
 
@@ -120,14 +117,14 @@ func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
-				os.Setenv("PWD", "/invalid/directory") // Simulate invalid PWD
-				expectedOutput := tempDir              // Should fallback to filepath.Abs(".") and get tempDir, set expectedOutput
+				os.Setenv("PWD", "/invalid/directory") 
+				expectedOutput := tempDir              
 				return initialDir, expectedOutput, func() {
 					os.Chdir(initialDir)
 					os.Unsetenv("PWD")
 				}
 			},
-			expectedOutput: "", // Will be set in setup, now used as default
+			expectedOutput: "", 
 			wantErr:        false,
 		},
 		{
@@ -136,22 +133,22 @@ func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
-				os.Setenv("PWD", tempDir) // Valid PWD
-				expectedOutput := tempDir // Set expectedOutput
+				os.Setenv("PWD", tempDir) 
+				expectedOutput := tempDir 
 				return initialDir, expectedOutput, func() {
 					os.Chdir(initialDir)
 					os.Unsetenv("PWD")
 				}
 			},
-			expectedOutput: "", // Will be set in setup, now used as default
+			expectedOutput: "", 
 			wantErr:        false,
 		},
 	}
 
-	if runtime.GOOS == "linux" { // Add Linux specific test case
+	if runtime.GOOS == "linux" { 
 		testCases = append(testCases, struct {
 			name           string
-			setup          func() (string, string, func()) // Modified setup to return expectedOutput
+			setup          func() (string, string, func()) 
 			expectedOutput string
 			wantErr        bool
 		}{
@@ -160,20 +157,19 @@ func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 				initialDir, _ := os.Getwd()
 				tempDir := t.TempDir()
 				os.Chdir(tempDir)
-				// /proc/self/cwd always points to the actual cwd, no easy way to mock invalid scenario reliably for testing.
-				expectedOutput := tempDir // Set expectedOutput
+				expectedOutput := tempDir 
 				return initialDir, expectedOutput, func() {
 					os.Chdir(initialDir)
 				}
 			},
-			expectedOutput: "", // Will be set in setup, now used as default
+			expectedOutput: "", 
 			wantErr:        false,
 		})
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			initialDir, expectedOutput, teardown := tc.setup() // Capture expectedOutput
+			initialDir, expectedOutput, teardown := tc.setup()
 			defer teardown()
 
 			cmd := NewPwdCommand()
@@ -187,16 +183,14 @@ func TestPwdCommand_GetCurrentDirectory(t *testing.T) {
 				t.Errorf("Test case '%s': Unexpected error: %v", tc.name, err)
 			}
 
-			// expectedOutput := tc.expectedOutput // No longer needed, value from setup
 			if expectedOutput == "" {
-				currentDir, _ := os.Getwd() // Get current dir after setup if not provided by setup
+				currentDir, _ := os.Getwd() 
 				expectedOutput = currentDir
 			}
 
 			if pwd != expectedOutput {
 				t.Errorf("Test case '%s': Output mismatch:\nexpected:\n'%s'\ngot:\n'%s'", tc.name, expectedOutput, pwd)
 			}
-			// Verify initial directory was restored (extra safety)
 			os.Chdir(initialDir)
 			currentDirAfterTest, _ := os.Getwd()
 			if currentDirAfterTest != initialDir {
@@ -224,12 +218,11 @@ func TestPwdCommand_GetCurrentDirectory_PathCleaning(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	cleanedExpectedPath := tempDir // filepath.Clean should resolve ".." and "."
+	cleanedExpectedPath := tempDir 
 
 	if pwd != messyPath {
 		t.Errorf("Path cleaning test failed: Expected cleaned path to be '%s', but got '%s'", cleanedExpectedPath, pwd)
 	}
-	// Verify initial directory was restored (extra safety)
 	os.Chdir(initialDir)
 	currentDirAfterTest, _ := os.Getwd()
 	if currentDirAfterTest != initialDir {

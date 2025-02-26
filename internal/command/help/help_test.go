@@ -51,7 +51,7 @@ func TestHelpCommand_Execute(t *testing.T) {
 				if !errors.Is(err, tc.wantErr) {
 					t.Errorf("Test case '%s': Expected error type '%v', but got '%v'", tc.name, tc.wantErr, err)
 				}
-				return // Skip output check if error is expected
+				return 
 			}
 
 			if err != nil {

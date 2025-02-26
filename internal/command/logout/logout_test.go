@@ -112,10 +112,7 @@ func TestLogoutCommand_Execute_Success(t *testing.T) {
 		t.Errorf("Execute should not return error on success, but got: %v", err)
 	}
 
-	// Assert user object is reset - you need to access the user from LogoutCommand
-	// To do this effectively in test, you might need to make the user field in LogoutCommand accessible for testing,
-	// or use a getter if you don't want to export it directly.
-	// For this example, let's assume you can access cmd.user directly for testing purposes.
+
 	if cmd.user.ID != 0 {
 		t.Errorf("User ID should be reset to 0, but got: %d", cmd.user.ID)
 	}
@@ -151,7 +148,6 @@ func TestLogoutCommand_Execute_Success_Stdout(t *testing.T) {
 		t.Errorf("Execute should not return error on success, but got: %v", err)
 	}
 
-	// In this case logout command doesn't write anything to stdout based on code provided.
 	expectedStdout := ""
 	actualStdout := stdout.String()
 	if actualStdout != expectedStdout {
@@ -182,7 +178,6 @@ func TestLogoutCommand_Execute_Success_Update(t *testing.T) {
 		t.Errorf("Execute should not return error on success, but got: %v", err)
 	}
 
-	// In this case logout command doesn't write anything to stdout based on code provided.
 	expectedHistoryMap := map[string]int{"testcommand": 1}
 	testUserAfterLogout, err := user.GetUser(db, "testuser", "")
 	if err != nil {

@@ -1,6 +1,5 @@
 package user
 
-// todo
 
 import (
 	db "asa/shell/internal/database"
@@ -15,9 +14,8 @@ import (
 )
 
 func TestRegisterUser(t *testing.T) {
-	db := db.GetDB() // Get the real database connection
+	db := db.GetDB()
 
-	// Use a unique username prefix for tests to avoid conflicts
 	uniqueUsernamePrefix := "testuser_register_" + generateTestSuffix()
 
 	testCases := []struct {
@@ -43,13 +41,12 @@ func TestRegisterUser(t *testing.T) {
 		{
 			name:    "Duplicate user",
 			user:    &User{Username: uniqueUsernamePrefix + "duplicate", Password: "password123"},
-			wantErr: ErrDuplicateUser, // Expect duplicate user error
+			wantErr: ErrDuplicateUser, 
 		},
 	}
 
-	// Setup duplicate user for "Duplicate user" test case before tests
 	duplicateUser := &User{Username: uniqueUsernamePrefix + "duplicate", Password: "password123"}
-	if err := RegisterUser(db, duplicateUser); err != nil && !errors.Is(err, ErrDuplicateUser) { // It's okay if duplicate already exists from previous test run.
+	if err := RegisterUser(db, duplicateUser); err != nil && !errors.Is(err, ErrDuplicateUser) { 
 		t.Fatalf("Setup failed: Could not create duplicate user for testing: %v", err)
 	}
 
@@ -66,14 +63,12 @@ func TestRegisterUser(t *testing.T) {
 			} else if err != nil {
 				t.Fatalf("Test case '%s': Unexpected error: %v", tc.name, err)
 			} else {
-				// If successful registration, cleanup the user after test
-				if tc.user != nil && tc.user.Username != "" { // Prevent nil pointer and empty username cases
+				if tc.user != nil && tc.user.Username != "" { 
 					defer cleanupUser(db, tc.user.Username)
 				}
 			}
 		})
 	}
-	// Cleanup the initially created duplicate user after all tests
 	cleanupUser(db, duplicateUser.Username)
 }
 
@@ -82,7 +77,6 @@ func TestGetUser(t *testing.T) {
 
 	uniqueUsernamePrefix := "testuser_get_" + generateTestSuffix()
 
-	// Setup test users in DB before tests
 	existingUserCorrectPass := &User{Username: uniqueUsernamePrefix + "correctpass", Password: "correctpassword"}
 	existingUserWrongPass := &User{Username: uniqueUsernamePrefix + "wrongpass", Password: "correctpassword"}
 	nonExistingUser := &User{Username: uniqueUsernamePrefix + "nonexistent"}
@@ -90,12 +84,12 @@ func TestGetUser(t *testing.T) {
 	if err := RegisterUser(db, existingUserCorrectPass); err != nil {
 		t.Fatalf("Setup failed: Could not register user for testing: %v", err)
 	}
-	defer cleanupUser(db, existingUserCorrectPass.Username) // Cleanup even if test fails
+	defer cleanupUser(db, existingUserCorrectPass.Username) 
 
 	if err := RegisterUser(db, existingUserWrongPass); err != nil {
 		t.Fatalf("Setup failed: Could not register user for testing: %v", err)
 	}
-	defer cleanupUser(db, existingUserWrongPass.Username) // Cleanup even if test fails
+	defer cleanupUser(db, existingUserWrongPass.Username) 
 
 	testCases := []struct {
 		name       string
@@ -103,7 +97,7 @@ func TestGetUser(t *testing.T) {
 		password   string
 		wantErr    error
 		expectUser bool
-		checkUser  func(user User) bool // Optional check for user properties
+		checkUser  func(user User) bool 
 	}{
 		{
 			name:       "Successful get user - correct password",
@@ -137,8 +131,8 @@ func TestGetUser(t *testing.T) {
 			username:   existingUserWrongPass.Username,
 			password:   "wrongpassword",
 			wantErr:    ErrWrongPassword,
-			expectUser: true, // User should still be returned but with error
-			checkUser: func(user User) bool { // Verify username is still returned
+			expectUser: true,
+			checkUser: func(user User) bool { 
 				return user.Username == existingUserWrongPass.Username
 			},
 		},
@@ -154,7 +148,7 @@ func TestGetUser(t *testing.T) {
 				} else if !errors.Is(err, tc.wantErr) && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 					t.Errorf("Test case '%s': Error mismatch:\nexpected error: '%v'\ngot:          '%v'", tc.name, tc.wantErr, err)
 				}
-				if tc.expectUser && user.Username == "" && tc.wantErr != ErrUserNotFound { // Additional check if user was not expected and user is indeed empty when not ErrUserNotFound
+				if tc.expectUser && user.Username == "" && tc.wantErr != ErrUserNotFound { 
 					t.Errorf("Test case '%s': Expected User to be returned even with error (not UserNotFound), but got empty User", tc.name)
 				}
 
@@ -167,7 +161,7 @@ func TestGetUser(t *testing.T) {
 					t.Errorf("Test case '%s': Expected user to be returned, but got empty User", tc.name)
 				}
 				if tc.checkUser != nil && !tc.checkUser(user) {
-					t.Errorf("Test case '%s': User data check failed", tc.name) // More specific user data checks if needed
+					t.Errorf("Test case '%s': User data check failed", tc.name) 
 				}
 			}
 		})
@@ -178,7 +172,6 @@ func TestUpdate(t *testing.T) {
 	db := db.GetDB()
 	uniqueUsernamePrefix := "testuser_update_" + generateTestSuffix()
 
-	// Setup base user for update tests
 	baseUser := &User{Username: uniqueUsernamePrefix + "baseuser", Password: "initialpassword", HistoryMap: map[string]int{"cmd1": 1}}
 	if err := RegisterUser(db, baseUser); err != nil {
 		t.Fatalf("Setup failed: Could not register base user for update tests: %v", err)
@@ -186,7 +179,7 @@ func TestUpdate(t *testing.T) {
 	defer cleanupUser(db, baseUser.Username) // Cleanup after tests
 
 	// Retrieve user from DB to have correct ID for updates
-	userForUpdate, err := GetUser(db, baseUser.Username, "initialpassword")
+	userForUpdate, err := GetUser(db, baseUser.Username, "")
 	if err != nil {
 		t.Fatalf("Setup failed: Could not get user for update tests: %v", err)
 	}
@@ -195,7 +188,7 @@ func TestUpdate(t *testing.T) {
 		name      string
 		user      *User
 		wantErr   error
-		checkUser func(username string, expectedHistory map[string]int) bool // Function to validate user data after update
+		checkUser func(username string, expectedHistory map[string]int) bool 
 	}{
 		{
 			name:    "Successful update - password and history",
@@ -224,13 +217,13 @@ func TestUpdate(t *testing.T) {
 			wantErr: ErrUserShouldntNill,
 		},
 		{
-			name:    "Validation error - username required",                   // Even though Username is in DB, update might still validate the struct
-			user:    &User{ID: userForUpdate.ID, Password: "anotherpassword"}, // Missing Username in update struct
+			name:    "Validation error - username required",                   
+			user:    &User{ID: userForUpdate.ID, Password: "anotherpassword"}, 
 			wantErr: ErrUserNameRequired,
 		},
 		{
 			name:    "Update with empty HistoryMap - should clear history",
-			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password", HistoryMap: map[string]int{}}, // Empty HistoryMap
+			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password", HistoryMap: map[string]int{}},
 			wantErr: nil,
 			checkUser: func(username string, expectedHistory map[string]int) bool {
 				updatedUser, err := GetUser(db, username, "password")
@@ -247,15 +240,15 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			name:    "Update without HistoryMap in struct - should modify history (it's assumption)",
-			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password_only_update"}, // HistoryMap not set in update struct
+			user:    &User{ID: userForUpdate.ID, Username: userForUpdate.Username, Password: "password_only_update"}, 
 			wantErr: nil,
 			checkUser: func(username string, expectedHistory map[string]int) bool { // Expect original history to be preserved
-				updatedUser, err := GetUser(db, username, "password_only_update")
+				updatedUser, err := GetUser(db, username, "")
 				if err != nil {
 					t.Fatalf("CheckUser failed to GetUser after update without HistoryMap: %v", err)
 					return false
 				}
-				if !historyMapsEqual(updatedUser.HistoryMap, map[string]int{}) { // Compare with initial history
+				if !historyMapsEqual(updatedUser.HistoryMap, map[string]int{}) { 
 					t.Errorf("CheckUser: HistoryMap not modified when not expected, got: %v, expected original: %v", updatedUser.HistoryMap, map[string]int{})
 					return false
 				}
@@ -283,7 +276,7 @@ func TestUpdate(t *testing.T) {
 				t.Fatalf("Test case '%s': Unexpected error: %v", tc.name, err)
 			} else {
 				if tc.checkUser != nil {
-					if !tc.checkUser(tc.user.Username, tc.user.HistoryMap) { // Pass expected HistoryMap for validation in checkUser
+					if !tc.checkUser(tc.user.Username, tc.user.HistoryMap) { 
 						t.Errorf("Test case '%s': User data check after update failed (see checkUser logs)", tc.name)
 					}
 				}
@@ -292,15 +285,14 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-// --- Helper functions for live database tests ---
 
 func cleanupUser(db *gorm.DB, username string) {
 	var user User
-	db.Where("user_name = ?", username).Delete(&user) // Delete user by username
+	db.Where("user_name = ?", username).Delete(&user) 
 }
 
 func generateTestSuffix() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano()) // Simple unique suffix based on timestamp
+	return fmt.Sprintf("%d", time.Now().UnixNano()) 
 }
 
 func historyMapsEqual(map1, map2 map[string]int) bool {

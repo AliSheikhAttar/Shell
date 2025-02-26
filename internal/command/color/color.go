@@ -8,24 +8,20 @@ import (
 	"strings"
 )
 
-// CDCommand implements the 'cd' built-in command
 type ColorCommand struct {
 	envVar string
 }
 
-// NewCDCommand creates a new cd command
 func NewColorCommand() *ColorCommand {
 	colorCmd := &ColorCommand{envVar: "SHELLCOLOR"}
 	os.Setenv(colorCmd.envVar, "1")
 	return colorCmd
 }
 
-// Name returns the name of the command
 func (c *ColorCommand) Name() string {
 	return "color"
 }
 
-// Execute handles the cd command execution
 func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
 	switch len(args) {
 	case 0:

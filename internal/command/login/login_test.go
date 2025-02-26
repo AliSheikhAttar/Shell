@@ -110,9 +110,8 @@ func TestLoginCommand_Execute(t *testing.T) {
 			name: "Invalid username",
 			args: []string{"nonexistentuser", "password"},
 			setupDB: func(db *gorm.DB) {
-				// No setup needed, user should not exist
 			},
-			expectedErr: errors.New("user not found"), // <----- CORRECT expectedErr to error value
+			expectedErr: errors.New("user not found"), 
 			assertUser: func(t *testing.T, currentUser *user.User, expectedError error) {
 				if currentUser.Username != "" {
 					t.Errorf("Expected current user username to be empty, but got '%s'", currentUser.Username)
@@ -120,8 +119,8 @@ func TestLoginCommand_Execute(t *testing.T) {
 				if currentUser.ID != 0 {
 					t.Errorf("Expected current user ID to be 0, but got %d", currentUser.ID)
 				}
-				if expectedError.Error() != errors.New("user not found").Error() { // <---- CORRECT error assertion using errors.Is
-					t.Errorf("Expected error '%v', but got: %v", errors.New("user not found"), expectedError) // Corrected expected error value in error message
+				if expectedError.Error() != errors.New("user not found").Error() { 
+					t.Errorf("Expected error '%v', but got: %v", errors.New("user not found"), expectedError) 
 				}
 			},
 		},
@@ -184,7 +183,7 @@ func TestLoginCommand_Execute(t *testing.T) {
 			db := setupTestDB(t)
 			defer teardownTestDB(t, db)
 
-			currentUser := &user.User{} // <----- CREATE currentUser HERE, inside t.Run
+			currentUser := &user.User{} 
 			cmdWithDB := NewLoginCommand(db, currentUser)
 			cmdTest.setupDB(db)
 

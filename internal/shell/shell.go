@@ -163,7 +163,6 @@ func (s *Shell) Start() error {
 	}
 }
 
-// printPrompt displays the shell prompt
 func (s *Shell) printPrompt() error {
 	currentDir, err := utils.CurrentPwd()
 	if err != nil {
@@ -196,7 +195,7 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 	if cmd != "history" {
 		if s.user.Username != "" {
 			s.user.HistoryMap[input]++
-			// err := user.Update(s.database, &s.user) // too insufficient but most reliable
+			// err := user.Update(s.database, &s.user) 
 		} else {
 			s.history[input]++
 		}
@@ -257,18 +256,15 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 	if len(parsedArg) == 0 {
 		return "", nil, redirects, nil
 	}
-	// Parse redirection
 	args, redir, err := redirection.ParseRedirection(parsedArg)
 	if err != nil {
 		return "", nil, redirects, err
 	}
-	// Setup redirection if needed
 	if redir != nil {
 		file, err := redirection.SetupRedirection(redir)
 		if err != nil {
 			return "", nil, redirects, err
 		}
-		// Set appropriate output & error
 		switch redir.Type {
 		case redirection.OutputRedirect, redirection.OutputAppend:
 			redirects.stdout.std = file

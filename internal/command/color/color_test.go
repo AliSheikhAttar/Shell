@@ -96,7 +96,6 @@ func TestColorCommand_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := NewColorCommand()
 
-			// Verify command name
 			if got := cmd.Name(); got != "color" {
 				t.Errorf("CatCommand.Name() = %v, want %v", got, "cat")
 			}
@@ -108,16 +107,13 @@ func TestColorCommand_Execute(t *testing.T) {
 					os.Unsetenv("SHELLCOLOR")
 				}
 			}
-			// Capture stdout
 			stdout := &bytes.Buffer{}
 			err := cmd.Execute(tt.inputArgs, stdout)
 
-			// Check error - Simplified to boolean check
 			if (err != nil) && tt.expectedError {
 				if err == nil {
 					t.Errorf("Expected error, but got nil")
 				}
-				// We are no longer checking the specific error type here
 			} else if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}

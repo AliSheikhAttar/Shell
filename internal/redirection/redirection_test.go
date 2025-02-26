@@ -80,60 +80,58 @@ func TestParseRedirection(t *testing.T) {
 			wantErr:       ErrMissingFileForRedirection,
 		},
 		{
-			name:          "Arguments before and after redirection in middle", // Still valid as before, redirection parsing stops at operator
+			name:          "Arguments before and after redirection in middle", 
 			inputArgs:     []string{"command", "-arg1", ">", "output.txt", "extra_arg"},
 			expectedArgs:  []string{"command", "-arg1"},
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output.txt"},
 			wantErr:       nil,
 		},
 		{
-			name:          "Multiple redirection operators in middle - first one takes precedence", // Still valid as before
+			name:          "Multiple redirection operators in middle - first one takes precedence",
 			inputArgs:     []string{"cmd", ">", "output1.txt", ">>", "output2.txt"},
 			expectedArgs:  []string{"cmd"},
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output1.txt"},
 			wantErr:       nil,
 		},
-		// New test cases for redirection at the beginning
 		{
 			name:          "Output redirect > at start",
-			inputArgs:     []string{">", "output.txt", "cmd", "arg1"}, // operator, file, cmd, arg - order as per changed logic
-			expectedArgs:  []string{"arg1"},                           // Expects args *after* redirection and filename are returned. Based on args[3:] logic.
+			inputArgs:     []string{">", "output.txt", "cmd", "arg1"}, 
+			expectedArgs:  []string{"arg1"},                           
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output.txt"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Output append >> at start",
-			inputArgs:     []string{">>", "append.log", "command", "-option"}, // operator, file, cmd, arg
-			expectedArgs:  []string{"-option"},                                // Expect args after redirection and filename
+			inputArgs:     []string{">>", "append.log", "command", "-option"}, 
+			expectedArgs:  []string{"-option"},                                
 			expectedRedir: &Redirection{Type: OutputAppend, File: "append.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Error redirect 2> at start",
-			inputArgs:     []string{"2>", "error.log", "program", "--flag"}, // operator, file, cmd, arg
-			expectedArgs:  []string{"--flag"},                               // Expect args after redirection and filename
+			inputArgs:     []string{"2>", "error.log", "program", "--flag"}, 
+			expectedArgs:  []string{"--flag"},                               
 			expectedRedir: &Redirection{Type: ErrorRedirect, File: "error.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Error append 2>> at start",
-			inputArgs:     []string{"2>>", "error_append.log", "script", "param1"}, // operator, file, cmd, arg
-			expectedArgs:  []string{"param1"},                                      // Expect args after redirection and filename
+			inputArgs:     []string{"2>>", "error_append.log", "script", "param1"}, 
+			expectedArgs:  []string{"param1"},                                      
 			expectedRedir: &Redirection{Type: ErrorAppend, File: "error_append.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Missing file for output redirect > at start",
-			inputArgs:     []string{">", "cmd", "arg"},  // operator, but missing file between operator and command. According to logic, "cmd" becomes filename, and "arg" is skipped. Is this correct behavior?
-			expectedArgs:  nil,                          // If missing file after operator at start, should it be error or just no redirection? Current code returns nil args and no redir. Review this expected behavior.
-			expectedRedir: nil,                          // No redirection as filename is missing effectively based on logic.
-			wantErr:       ErrMissingFileForRedirection, // Changed to ErrMissingFileForRedirection - more appropriate if file is indeed missing after operator.
+			inputArgs:     []string{">", "cmd", "arg"},  
+			expectedArgs:  nil,                          
+			expectedRedir: nil,                          
+			wantErr:       ErrMissingFileForRedirection, 
 		},
-		// Test case for initialQuotes logic (if it's indeed relevant and intended - needs clarification from user)
 		{
-			name:          "Redirection operator in initialQuotes - error redirection append", // Test case for the initialQuotes check logic - if it's intended to prevent redirection.
+			name:          "Redirection operator in initialQuotes - error redirection append",
 			inputArgs:     []string{"2>>", "output.txt", "ls", "-l"},
-			expectedArgs:  []string{"-l"}, // Expect original args back - no redirection if '>' found in initialQuotes.
+			expectedArgs:  []string{"-l"}, 
 			expectedRedir: &Redirection{Type: ErrorAppend, File: "output.txt"},
 			wantErr:       nil,
 		},
@@ -147,7 +145,7 @@ func TestParseRedirection(t *testing.T) {
 				if !errors.Is(err, tc.wantErr) {
 					t.Errorf("Test case '%s': Expected error '%v', but got '%v'", tc.name, tc.wantErr, err)
 				}
-				return // Stop here if error is expected
+				return 
 			}
 
 			if err != nil {
@@ -177,9 +175,7 @@ func TestParseRedirection(t *testing.T) {
 	}
 }
 
-// Remaining TestSetupRedirection and helper functions (stringSlicesEqual, flagsForRedirectionType) are likely still valid
-// and can be reused from the previous response, unless there are specific changes needed for SetupRedirection based on new logic,
-// which is not apparent from the code provided.  If SetupRedirection logic changes, its tests need to be updated too.
+
 
 func TestSetupRedirection(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -196,7 +192,7 @@ func TestSetupRedirection(t *testing.T) {
 		{
 			name:          "No redirection",
 			redir:         nil,
-			expectedFlags: 0, // Not used when redir is nil
+			expectedFlags: 0, 
 			expectError:   false,
 		},
 		{
@@ -220,8 +216,8 @@ func TestSetupRedirection(t *testing.T) {
 			expectedFlags:       os.O_WRONLY | os.O_CREATE | os.O_APPEND,
 			expectError:         false,
 			checkFileContent:    true,
-			fileContentToWrite:  "initial content\n",                   // Write initial content to test append
-			expectedFileContent: "initial content\nappended content\n", // Expected content after append
+			fileContentToWrite:  "initial content\n",                  
+			expectedFileContent: "initial content\nappended content\n", 
 		},
 		{
 			name: "Error Redirect 2>",
@@ -244,17 +240,17 @@ func TestSetupRedirection(t *testing.T) {
 			expectedFlags:       os.O_WRONLY | os.O_CREATE | os.O_APPEND,
 			expectError:         false,
 			checkFileContent:    true,
-			fileContentToWrite:  "initial error content\n",                   // Initial content for append test
-			expectedFileContent: "initial error content\nappended content\n", // Expected after append
+			fileContentToWrite:  "initial error content\n",                   
+			expectedFileContent: "initial error content\nappended content\n", 
 		},
 		{
 			name: "File open error - permission denied",
 			redir: &Redirection{
 				Type: OutputRedirect,
-				File: filepath.Join("/", "root_owned_file.txt"), // Try to create in root - likely permission denied
+				File: filepath.Join("/", "root_owned_file.txt"), 
 			},
 			expectedFlags: os.O_WRONLY | os.O_CREATE | os.O_TRUNC,
-			expectError:   true, // Expect error due to permission
+			expectError:   true, 
 		},
 	}
 
@@ -262,7 +258,6 @@ func TestSetupRedirection(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var initialContent []byte
 			if tc.redir != nil && tc.checkFileContent && (tc.redir.Type == OutputAppend || tc.redir.Type == ErrorAppend) {
-				// Create file with initial content for append tests
 				initialContent = []byte(tc.fileContentToWrite)
 				err := ioutil.WriteFile(tc.redir.File, initialContent, 0644)
 				if err != nil {
@@ -276,14 +271,14 @@ func TestSetupRedirection(t *testing.T) {
 				if err == nil {
 					t.Errorf("Test case '%s': Expected error, but got nil", tc.name)
 				}
-				return // Stop here if error is expected
+				return 
 			}
 
 			if err != nil {
 				t.Fatalf("Test case '%s': Unexpected error: %v", tc.name, err)
 			}
 
-			if tc.redir != nil { // Only check file if redirection was requested
+			if tc.redir != nil { 
 				if file == nil {
 					t.Fatalf("Test case '%s': Expected file, but got nil", tc.name)
 				}
@@ -293,19 +288,18 @@ func TestSetupRedirection(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Test case '%s': Could not stat file: %v", tc.name, err)
 				}
-				// Check file permissions (best-effort, might be influenced by umask etc.)
-				if os.FileMode(0644) != fileStat.Mode().Perm()&0777 { // comparing permission bits only
+				if os.FileMode(0644) != fileStat.Mode().Perm()&0777 { 
 					t.Errorf("Test case '%s': File permissions are not as expected. Expected permissions to contain 0644, got %o", tc.name, fileStat.Mode().Perm()&0777)
 				}
 
 				if tc.checkFileContent {
 					if tc.redir.Type == OutputAppend || tc.redir.Type == ErrorAppend {
-						_, err = file.WriteString("appended content\n") // Append for append tests
+						_, err = file.WriteString("appended content\n") 
 						if err != nil {
 							t.Fatalf("Test case '%s': Error writing appended content: %v", tc.name, err)
 						}
 					} else {
-						_, err = file.WriteString(tc.fileContentToWrite) // Write initial content for truncate/redirect tests
+						_, err = file.WriteString(tc.fileContentToWrite) 
 						if err != nil {
 							t.Fatalf("Test case '%s': Error writing content: %v", tc.name, err)
 						}
@@ -321,14 +315,13 @@ func TestSetupRedirection(t *testing.T) {
 					}
 				}
 
-				// Check flags - cannot directly retrieve flags from *os.File after OpenFile, OS specific and not reliable.
-				// Best effort check - verify flags *used to open* file are as expected in test cases.
+
 				expectedOpenFlags := tc.expectedFlags
-				actualOpenFlags := flagsForRedirectionType(tc.redir.Type)          // Helper to get flags used in SetupRedirection
-				if actualOpenFlags != expectedOpenFlags && tc.expectedFlags != 0 { // tc.expectedFlags == 0 for "No redirection" case.
-					if tc.redir.Type != NoRedirection { // Skip flag check for "No redirection" since no file is opened
+				actualOpenFlags := flagsForRedirectionType(tc.redir.Type)         
+				if actualOpenFlags != expectedOpenFlags && tc.expectedFlags != 0 {
+					if tc.redir.Type != NoRedirection {
 						t.Logf("Note: Cannot reliably verify file flags after os.OpenFile across platforms. Test only checks flags *used* during OpenFile.") // Informative log
-						// t.Errorf("Test case '%s': File open flags mismatch: expected flags to contain %v, but flags used in test are %v", tc.name, expectedOpenFlags, actualOpenFlags) // Removed direct flag comparison as it's unreliable to verify flags *after* OpenFile.
+						
 					}
 
 				}
@@ -342,7 +335,6 @@ func TestSetupRedirection(t *testing.T) {
 	}
 }
 
-// Helper function to compare string slices for equality
 func stringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -355,12 +347,11 @@ func stringSlicesEqual(a, b []string) bool {
 	return true
 }
 
-// Helper function to get the flags used in SetupRedirection for a given RedirectionType for testing purposes.
 func flagsForRedirectionType(redirType RedirectionType) int {
 	flags := os.O_WRONLY | os.O_CREATE
 	if redirType == OutputAppend || redirType == ErrorAppend {
 		flags |= os.O_APPEND
-	} else if redirType != NoRedirection { // Explicitly exclude NoRedirection, and include others if needed.
+	} else if redirType != NoRedirection { 
 		flags |= os.O_TRUNC
 	}
 	return flags

@@ -8,20 +8,17 @@ import (
 )
 
 func TestCDCommand(t *testing.T) {
-	// Save current directory to restore it after tests
 	originalDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
 	}
 	defer os.Chdir(originalDir)
 
-	// Get user's home directory for testing
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
 	}
 
-	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "cd-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
@@ -78,12 +75,10 @@ func TestCDCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset to original directory before each test
 			if err := os.Chdir(originalDir); err != nil {
 				t.Fatalf("Failed to reset directory: %v", err)
 			}
 
-			// Run setup if provided
 			if tt.setup != nil {
 				if err := tt.setup(); err != nil {
 					t.Fatalf("Setup failed: %v", err)
@@ -97,7 +92,6 @@ func TestCDCommand(t *testing.T) {
 				t.Errorf("CDCommand.Name() = %v, want %v", got, "cd")
 			}
 
-			// Execute command
 			err := cmd.Execute(tt.args, os.Stdout)
 
 			// Check error
@@ -106,7 +100,6 @@ func TestCDCommand(t *testing.T) {
 				return
 			}
 
-			// If we expect an error of a specific type, check it
 			if tt.wantErr != nil {
 				if _, ok := err.(interface{ Error() string }); !ok {
 					t.Errorf("Expected error of type %T, got %T", tt.wantErr, err)
@@ -114,7 +107,6 @@ func TestCDCommand(t *testing.T) {
 				return
 			}
 
-			// If no error, verify current directory
 			if err == nil {
 				got, err := os.Getwd()
 				if err != nil {

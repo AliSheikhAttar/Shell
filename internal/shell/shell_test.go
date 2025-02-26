@@ -119,10 +119,8 @@ func TestParseCommand(t *testing.T) {
 }
 
 func TestSystemCommandExecution(t *testing.T) {
-	// Create temporary test directory
 	tmpDir := t.TempDir()
 
-	// Create a test bash script
 	shScriptPath := filepath.Join(tmpDir, "test-script.sh")
 	shScriptContent := `#!/bin/sh
 		echo "Hello from test script"`
@@ -130,14 +128,12 @@ func TestSystemCommandExecution(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create a test python script
 	pyScriptPath := filepath.Join(tmpDir, "test-script.py")
 	pyScriptContent := `print("Hello from test script")`
 	if err := os.WriteFile(pyScriptPath, []byte(pyScriptContent), 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	// Add temporary directory to PATH
 	originalPath := os.Getenv("PATH")
 	os.Setenv("PATH", tmpDir+":"+originalPath)
 	defer os.Setenv("PATH", originalPath)
@@ -181,11 +177,9 @@ func TestSystemCommandExecution(t *testing.T) {
 }
 
 func TestShell_SystemCommandExecution(t *testing.T) {
-	// Create temporary test directory and scripts
 	tmpDir := t.TempDir()
 	setupTestScripts(t, tmpDir)
 
-	// Add temporary directory to PATH
 	originalPath := os.Getenv("PATH")
 	os.Setenv("PATH", tmpDir+":"+originalPath)
 	defer os.Setenv("PATH", originalPath)
@@ -236,38 +230,32 @@ func TestShell_SystemCommandExecution(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create shell instance with captured output
 			sh := createTestShell()
 
-			// Set test environment variable if needed
 			if strings.Contains(tt.input, "env-script.sh") {
 				os.Setenv("TEST_VAR", "test_value")
 				defer os.Unsetenv("TEST_VAR")
 			}
 			oldStdout := os.Stdout
-			r, w, _ := os.Pipe() // Create a pipe to capture output
+			r, w, _ := os.Pipe() 
 			os.Stdout = w
 
-			// Execute command
 			_, err := sh.executeCommand(tt.input)
 
 			w.Close()
 			os.Stdout = oldStdout
 
-			// Check error condition
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Shell.executeCommand() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			// Read the captured output from the pipe
 			var buf bytes.Buffer
 			_, err = buf.ReadFrom(r)
 			if err != nil {
 				t.Fatalf("Failed to read captured output: %v", err)
 			}
 			gotOut := buf.String()
-			// Check output
 			if tt.wantOut != "" {
 				if gotOut != tt.wantOut {
 					t.Errorf("Shell.executeCommand() output = %q, want %q", gotOut, tt.wantOut)
@@ -323,14 +311,12 @@ func TestShell_CommandWithPipes(t *testing.T) {
 func TestShell_ExecutablePermissions(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create a non-executable script
 	nonExecPath := filepath.Join(tmpDir, "non-executable.sh")
 	err := os.WriteFile(nonExecPath, []byte("#!/bin/sh\necho test\n"), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Test executing non-executable file
 	sh := createTestShell()
 	_, err = sh.executeCommand(nonExecPath)
 	if err == nil {
@@ -338,7 +324,6 @@ func TestShell_ExecutablePermissions(t *testing.T) {
 	}
 }
 
-// TestHelperProcess isn't a real test - it's used as a helper process for mocking commands
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
@@ -368,17 +353,14 @@ func TestHelperProcess(t *testing.T) {
 	}
 }
 
-// shell/shell_test.go
 
 func TestShell_PwdCommand(t *testing.T) {
-	// Create a temporary directory
 	tmpDir, err := os.MkdirTemp("", "shell-pwd-test-*")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Change to the temporary directory
 	originalDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
@@ -391,7 +373,7 @@ func TestShell_PwdCommand(t *testing.T) {
 	}
 
 	oldStdout := os.Stdout
-	r, w, _ := os.Pipe() // Create a pipe to capture output
+	r, w, _ := os.Pipe() 
 	os.Stdout = w
 	sh := createTestShellWithStdin(nil)
 	sh.registerCommand(pwd.NewPwdCommand())
@@ -403,7 +385,6 @@ func TestShell_PwdCommand(t *testing.T) {
 	w.Close()
 	os.Stdout = oldStdout
 
-	// Read the captured output from the pipe
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(r)
 	if err != nil {
@@ -416,7 +397,7 @@ func TestShell_PwdCommand(t *testing.T) {
 }
 
 func TestShell_parseCommand(t *testing.T) {
-	shell := setupTestShell(t) // Using setupTestShell to get a shell instance
+	shell := setupTestShell(t)
 
 	tests := []struct {
 		name              string
@@ -515,7 +496,7 @@ func TestShell_parseCommand(t *testing.T) {
 		},
 		{
 			name:              "Command starting with output redirection",
-			input:             "> file3 cat file2", // Test case "> file3 cat file2"
+			input:             "> file3 cat file2", 
 			expectedCmd:       "cat",
 			expectedArgs:      []string{"file2"},
 			expectRedirect:    true,
@@ -525,7 +506,7 @@ func TestShell_parseCommand(t *testing.T) {
 		},
 		{
 			name:              "Command starting with output redirection append",
-			input:             ">> file3 cat file2", // Test case "> file3 cat file2"
+			input:             ">> file3 cat file2",
 			expectedCmd:       "cat",
 			expectedArgs:      []string{"file2"},
 			expectRedirect:    true,
@@ -568,9 +549,8 @@ func TestShell_parseCommand(t *testing.T) {
 	}
 }
 
-// setupTestShell initializes a Shell instance for testing, using an in-memory SQLite DB.
 func setupTestShell(t *testing.T) *Shell {
-	t.Helper() // Indicate this is a helper function for test setup
+	t.Helper() 
 	db := db.GetDB()
 
 	rootDir, err := utils.CurrentPwd()
@@ -579,15 +559,14 @@ func setupTestShell(t *testing.T) *Shell {
 	}
 
 	testShell := &Shell{
-		user:     user.User{Username: ""}, // Start with no user logged in
+		user:     user.User{Username: ""}, 
 		database: db,
-		reader:   bufio.NewReader(&bytes.Buffer{}), // Mock reader, will set input per test
+		reader:   bufio.NewReader(&bytes.Buffer{}),
 		commands: make(map[string]command.Command),
 		history:  make(map[string]int),
 		rootDir:  rootDir,
 	}
 
-	// Register commands - same as in New() function
 	exitCmd := exit.NewExitCommand(testShell.database, &testShell.user)
 	testShell.registerCommand(exitCmd)
 	echoCmd := echo.NewEchoCommand()
@@ -621,12 +600,11 @@ func setupTestShell(t *testing.T) *Shell {
 
 	stdoutBuf := &bytes.Buffer{}
 	testShell.commands["pwd"].Execute([]string{}, stdoutBuf)
-	testShell.rootDir = strings.TrimSpace(stdoutBuf.String()) // Trim to remove newline
+	testShell.rootDir = strings.TrimSpace(stdoutBuf.String()) 
 
 	return testShell
 }
 
-// Helper to compare string slices for equality
 func equalStringSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -639,7 +617,6 @@ func equalStringSlices(a, b []string) bool {
 	return true
 }
 
-// mockShell creates a shell with custom input and output for testing
 func mockShell(input string) (*Shell, *bytes.Buffer) {
 	inputReader := strings.NewReader(input)
 	outputBuffer := new(bytes.Buffer)
@@ -678,13 +655,12 @@ echo "TEST_VAR=$TEST_VAR"
 
 func createTestShell() *Shell {
 	sh := New()
-	// Set custom stdout/stderr for testing
 	return sh
 }
 func createTestShellWithStdin(stdin io.Reader) *Shell {
 	sh := New()
 	if stdin != nil {
-		sh.reader = bufio.NewReader(stdin) // Make sure to update the reader too
+		sh.reader = bufio.NewReader(stdin) 
 	}
 	return sh
 }

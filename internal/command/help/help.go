@@ -21,7 +21,6 @@ func (c *HelpCommand) Execute(args []string, stdout io.Writer) error {
 	if len(args) > 0 {
 		return utils.ErrInvalidArgs
 	}
-	// Updated map to include usage for each command
 	commands := map[string][2]string{
 		
 		"cd":      {"change your directory", "cd <path>"},
@@ -39,16 +38,13 @@ func (c *HelpCommand) Execute(args []string, stdout io.Writer) error {
 	}
 
 	fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
-	// Adding the new "Usage" header
 	coloredCommand := utils.ColorText("Command", utils.TextBlue, utils.Bold)
 	coloredDescription := utils.ColorText("Description", utils.TextBlue, utils.Bold)
 	coloredUsage := utils.ColorText("Usage", utils.TextBlue, utils.Bold)
-	// Format now includes the "Usage" column
 	fmt.Fprintf(stdout, "|   %s   |             %s           |           %s                       |\n", coloredCommand, coloredDescription, coloredUsage)
 	fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
 	for key, val := range commands {
 		coloredKey := utils.ColorText(key, utils.TextYellow)
-		// The third element (val[1]) is the "Usage" information
 		fmt.Fprintf(stdout, "| %-20s | %-42s | %-46s |\n", coloredKey, utils.ColorText(val[0], utils.TextMagenta), utils.ColorText(val[1], utils.TextCyan))
 	}
 	fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")

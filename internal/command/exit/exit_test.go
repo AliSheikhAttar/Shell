@@ -11,7 +11,6 @@ import (
 	"asa/shell/utils"
 )
 
-// MockDB for testing purposes (if DB mocking is still allowed)
 type MockDB struct {
 	*gorm.DB
 	UpdatedUser *userSvc.User
@@ -28,7 +27,7 @@ func TestExitCommand_Execute_NoMockExit_InvalidArguments(t *testing.T) {
 		mockUser         *userSvc.User
 		expectedOutput   string
 		wantErr          error
-		expectUserUpdate bool // To test user update logic (if DB mocking is allowed) - should be false for invalid arg tests
+		expectUserUpdate bool 
 	}{
 		{
 			name:             "Exit with invalid argument - not a number string",
@@ -88,7 +87,7 @@ func TestExitCommand_Execute_NoMockExit_InvalidArguments(t *testing.T) {
 			var outBuf bytes.Buffer
 			err := cmd.Execute(tc.args, &outBuf)
 
-			if !errors.Is(err, tc.wantErr) { // Check for specific errors using errors.Is
+			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("Test case '%s': Expected error type '%v', but got '%v'", tc.name, tc.wantErr, err)
 			}
 

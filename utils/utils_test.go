@@ -61,9 +61,9 @@ func TestColorText(t *testing.T) {
 		},
 		{
 			name:           "Format codes as text - should not be interpreted as formats again",
-			text:           TextRed + " is red color code",                // Text already containing format codes
-			formats:        []string{Bold},                                // Apply bold on top
-			expectedOutput: Bold + TextRed + " is red color code" + Reset, // Bold + (TextRed + " is red color code") + Reset
+			text:           TextRed + " is red color code",                
+			formats:        []string{Bold},                                
+			expectedOutput: Bold + TextRed + " is red color code" + Reset, 
 		},
 	}
 
@@ -78,12 +78,12 @@ func TestColorText(t *testing.T) {
 }
 
 func TestIsColor(t *testing.T) {
-	originalShellColor, shellColorSet := os.LookupEnv("SHELLCOLOR") // Backup original SHELLCOLOR and if it was set
+	originalShellColor, shellColorSet := os.LookupEnv("SHELLCOLOR") 
 	defer func() {
 		if shellColorSet {
-			os.Setenv("SHELLCOLOR", originalShellColor) // Restore original SHELLCOLOR
+			os.Setenv("SHELLCOLOR", originalShellColor) 
 		} else {
-			os.Unsetenv("SHELLCOLOR") // Unset if it was not originally set
+			os.Unsetenv("SHELLCOLOR") 
 		}
 	}()
 
@@ -114,7 +114,7 @@ func TestIsColor(t *testing.T) {
 			name:            "SHELLCOLOR set to 'false'",
 			setEnvVar:       true,
 			envVarValue:     "false",
-			expectedIsColor: true, // Presence of variable, not its value, determines IsColor() result currently.
+			expectedIsColor: true, 
 		},
 		{
 			name:            "SHELLCOLOR set to '1'",
@@ -126,7 +126,7 @@ func TestIsColor(t *testing.T) {
 			name:            "SHELLCOLOR set to '0'",
 			setEnvVar:       true,
 			envVarValue:     "0",
-			expectedIsColor: true, // Presence of variable, not its value.
+			expectedIsColor: true,
 		},
 	}
 
@@ -147,19 +147,16 @@ func TestIsColor(t *testing.T) {
 }
 
 func TestFindCommand(t *testing.T) {
-	// Define builtins for testing context
 	LinuxBuiltins = map[string]bool{
 		"testbuiltin":    true,
 		"anotherbuiltin": true,
 	}
 
-	// Helper function to create test executables in a temp dir
 	createTestExecutable := func(dir, name string) string {
 		exePath := filepath.Join(dir, name)
 		if runtime.GOOS == "windows" {
-			exePath += ".exe" // Add .exe suffix for Windows
+			exePath += ".exe" 
 		}
-		// Create a dummy executable file (no actual content needed for these tests)
 		file, err := os.Create(exePath)
 		if err != nil {
 			t.Fatalf("Failed to create test executable: %v", err)
@@ -172,15 +169,14 @@ func TestFindCommand(t *testing.T) {
 		return exePath
 	}
 
-	// Backup and restore PATH and SHELL environment variables
 	originalPath := os.Getenv("PATH")
-	defer os.Setenv("PATH", originalPath) // Restore PATH after test
+	defer os.Setenv("PATH", originalPath) 
 
 	testCases := []struct {
 		name          string
 		cmd           string
 		pathEnv       string
-		setupPathDirs func(tempDir string) []string // Function to setup dirs in PATH and create test executables, returns created dirs for cleanup
+		setupPathDirs func(tempDir string) []string 
 		wantErr       error
 	}{
 		{
@@ -206,7 +202,7 @@ func TestFindCommand(t *testing.T) {
 				pathDir1 := filepath.Join(tempDir, "testpath1")
 				os.MkdirAll(pathDir1, 0755)
 				createTestExecutable(pathDir1, "testcmd1")
-				pathDir2 := filepath.Join(tempDir, "testpath2") // Not used in this case, but created for PATH env
+				pathDir2 := filepath.Join(tempDir, "testpath2") 
 				os.MkdirAll(pathDir2, 0755)
 				return []string{pathDir1, pathDir2}
 			},
@@ -242,18 +238,18 @@ func TestFindCommand(t *testing.T) {
 		{
 			name:          "Command not in PATH - PATH not set",
 			cmd:           "somecmd",
-			pathEnv:       "",  // Empty PATH
-			setupPathDirs: nil, // No dirs to setup as PATH is empty
+			pathEnv:       "",  
+			setupPathDirs: nil, 
 			wantErr:       ErrEnvironmentVarNotSet,
 		},
 		{
-			name:    "Command in PATH - executable with suffix (no suffix in command)", // Test finding exe with suffix when command is given without
+			name:    "Command in PATH - executable with suffix (no suffix in command)", 
 			cmd:     "testcmdSuffix",
 			pathEnv: "/testpathSuffix",
 			setupPathDirs: func(tempDir string) []string {
 				pathDir := filepath.Join(tempDir, "testpathSuffix")
 				os.MkdirAll(pathDir, 0755)
-				createTestExecutable(pathDir, "testcmdSuffix"+exeSuffix()) // Create executable WITH suffix
+				createTestExecutable(pathDir, "testcmdSuffix"+exeSuffix()) 
 				return []string{pathDir}
 			},
 			wantErr: nil,
@@ -267,21 +263,20 @@ func TestFindCommand(t *testing.T) {
 			if tc.setupPathDirs != nil {
 				pathDirs = tc.setupPathDirs(tempDir)
 			}
-			defer func() { // Cleanup: remove created directories and files in tempDir
+			defer func() { 
 				for _, dir := range pathDirs {
 					os.RemoveAll(dir)
 				}
 			}()
 
 			if tc.pathEnv != "" {
-				// Replace placeholders in pathEnv with tempDir path if needed
 				pathEnvWithTempDir := strings.ReplaceAll(tc.pathEnv, "/testpath1", filepath.Join(tempDir, "testpath1"))
 				pathEnvWithTempDir = strings.ReplaceAll(pathEnvWithTempDir, "/testpath2", filepath.Join(tempDir, "testpath2"))
 				pathEnvWithTempDir = strings.ReplaceAll(pathEnvWithTempDir, "/testpathSuffix", filepath.Join(tempDir, "testpathSuffix"))
 
 				os.Setenv("PATH", pathEnvWithTempDir)
 			} else {
-				os.Unsetenv("PATH") // Ensure PATH is unset for cases where PATH is intentionally empty
+				os.Unsetenv("PATH") 
 			}
 
 			fullPath, err := FindCommand(tc.cmd)
@@ -294,25 +289,22 @@ func TestFindCommand(t *testing.T) {
 				t.Fatalf("Test case '%s': Unexpected error: %v", tc.name, err)
 			}
 
-			// --- Calculate expectedFullPath HERE, inside t.Run, using tempDir ---
 			var expectedFullPath string
-			switch tc.name { // Based on test case name, construct expected path. Adjust as needed for other cases.
+			switch tc.name {
 			case "Command in PATH - found in first dir":
-				expectedFullPath = filepath.Join(tempDir, "testpath1", tc.cmd) // Construct expected path
+				expectedFullPath = filepath.Join(tempDir, "testpath1", tc.cmd) 
 			case "Command in PATH - found in second dir":
 				expectedFullPath = filepath.Join(tempDir, "testpath2", tc.cmd)
 			case "Command in PATH - executable with suffix (no suffix in command)":
 				expectedFullPath = filepath.Join(tempDir, "testpathSuffix", tc.cmd+exeSuffix())
 			case "Built-in command":
-				expectedFullPath = fmt.Sprintf("$builtin:%s", tc.cmd) // Or set it based on test case logic if needed.
+				expectedFullPath = fmt.Sprintf("$builtin:%s", tc.cmd) 
 			case "Command not in PATH - PATH set but not found", "Command not in PATH - PATH not set': Full path mismatch", "Command not in PATH - PATH not set":
 				expectedFullPath = ""
-			default: // For other cases where command is not found in PATH or is built-in, expectedFullPath remains empty string "" which is already the default.
-				expectedFullPath = tc.cmd // Or set it based on test case logic if needed.
+			default: 
+				expectedFullPath = tc.cmd 
 			}
-			// ----------------------------------------------------------------------
 
-			// Normalize paths for comparison
 			expectedFullPathNormalized := filepath.ToSlash(expectedFullPath)
 			actualFullPathNormalized := filepath.ToSlash(fullPath)
 
@@ -346,10 +338,10 @@ func TestIsQuoted(t *testing.T) {
 		{name: "Ends with single quote, but no start", input: "ends but no start'", expected: false},
 		{name: "Ends with double quote, but no start", input: "ends but no start\"", expected: false},
 		{name: "Empty string", input: "", expected: false},
-		{name: "Single quote only", input: "'", expected: false},                                                    // Not considered quoted as per spec
-		{name: "Double quote only", input: "\"", expected: false},                                                   // Not considered quoted as per spec
-		{name: "Escaped quotes - not considered quoted by IsQuoted", input: "\\'quoted string\\'", expected: false}, // Backslash escapes are shell responsibility, IsQuoted checks literal quotes
-		{name: "Mixed quotes - not quoted", input: "'double\" quotes'", expected: true},                             // Mismatched quotes are not quoted
+		{name: "Single quote only", input: "'", expected: false},                                                    
+		{name: "Double quote only", input: "\"", expected: false},                                                   
+		{name: "Escaped quotes - not considered quoted by IsQuoted", input: "\\'quoted string\\'", expected: false}, 
+		{name: "Mixed quotes - not quoted", input: "'double\" quotes'", expected: true},                             
 		{name: "Quoted number", input: "\"12345\"", expected: true},
 		{name: "Quoted special characters", input: "'!@#$%^'", expected: true},
 	}
@@ -378,10 +370,10 @@ func TestWhichQuoted(t *testing.T) {
 		{name: "Ends with single quote, but no start", input: "ends but no start'", expected: ""},
 		{name: "Ends with double quote, but no start", input: "ends but no start\"", expected: ""},
 		{name: "Empty string", input: "", expected: ""},
-		{name: "Single quote only", input: "'", expected: ""},                                                       // Not considered quoted as per spec - returns empty string
-		{name: "Double quote only", input: "\"", expected: ""},                                                      // Not considered quoted as per spec - returns empty string
-		{name: "Escaped quotes - not considered quoted by WhichQuoted", input: "\\'quoted string\\'", expected: ""}, // Backslash escapes are shell responsibility, WhichQuoted checks literal quotes - returns empty string
-		{name: "Mixed quotes - not quoted", input: "'double\" quotes'", expected: "'"},                              // Mismatched quotes are not quoted - returns empty string
+		{name: "Single quote only", input: "'", expected: ""},                                                       
+		{name: "Double quote only", input: "\"", expected: ""},                                                      
+		{name: "Escaped quotes - not considered quoted by WhichQuoted", input: "\\'quoted string\\'", expected: ""}, 
+		{name: "Mixed quotes - not quoted", input: "'double\" quotes'", expected: "'"},                              
 		{name: "Quoted number", input: "\"12345\"", expected: "\""},
 		{name: "Quoted special characters", input: "'!@#$%^'", expected: "'"},
 	}
@@ -413,10 +405,10 @@ func TestIsAlphaNumeric(t *testing.T) {
 		{name: "Newline", input: '\n', expected: false},
 		{name: "Tab", input: '\t', expected: false},
 		{name: "Semicolon", input: ';', expected: false},
-		{name: "Null byte", input: 0, expected: false}, // Byte value 0
+		{name: "Null byte", input: 0, expected: false},
 		{name: "Punctuation .", input: '.', expected: false},
 		{name: "Symbol $", input: '$', expected: false},
-		{name: "Byte out of ASCII range (e.g., for extended char sets)", input: 128, expected: false}, // Example: non-ASCII byte
+		{name: "Byte out of ASCII range (e.g., for extended char sets)", input: 128, expected: false}, 
 	}
 
 	for _, tc := range testCases {
@@ -440,15 +432,15 @@ func TestHasPrefix(t *testing.T) {
 		{name: "Exact match", s: "prefix", prefix: "prefix", expected: true},
 		{name: "Does not have prefix", s: "nomatchprefix", prefix: "prefix", expected: false},
 		{name: "Prefix longer than string", s: "short", prefix: "longerprefix", expected: false},
-		{name: "Empty string, empty prefix", s: "", prefix: "", expected: true}, // Empty string starts with empty prefix
+		{name: "Empty string, empty prefix", s: "", prefix: "", expected: true},
 		{name: "Empty string, non-empty prefix", s: "", prefix: "prefix", expected: false},
-		{name: "Non-empty string, empty prefix", s: "string", prefix: "", expected: true},                       // Any string starts with empty prefix
-		{name: "Prefix is substring in the middle", s: "stringprefixstring", prefix: "prefix", expected: false}, // Only checks at the beginning
+		{name: "Non-empty string, empty prefix", s: "string", prefix: "", expected: true},                       
+		{name: "Prefix is substring in the middle", s: "stringprefixstring", prefix: "prefix", expected: false}, 
 		{name: "Prefix with special chars", s: "!@#$string", prefix: "!@#$", expected: true},
-		{name: "String with special chars", s: "!@#$prefix", prefix: "prefix", expected: false}, // Special chars in string, not at prefix position
-		{name: "Unicode string with prefix", s: "你好prefix", prefix: "你好", expected: true},       // Unicode support in prefix
+		{name: "String with special chars", s: "!@#$prefix", prefix: "prefix", expected: false}, 
+		{name: "Unicode string with prefix", s: "你好prefix", prefix: "你好", expected: true},      
 		{name: "Unicode prefix in string", s: "prefix你好", prefix: "prefix", expected: true},
-		{name: "Unicode prefix, non-matching string", s: "不匹配prefix", prefix: "你好", expected: false}, // Non-matching unicode prefix
+		{name: "Unicode prefix, non-matching string", s: "不匹配prefix", prefix: "你好", expected: false},
 	}
 
 	for _, tc := range testCases {
@@ -472,15 +464,15 @@ func TestHasSuffix(t *testing.T) {
 		{name: "Exact match", s: "suffix", suffix: "suffix", expected: true},
 		{name: "Does not have suffix", s: "nomatchsuffix", suffix: "suffix", expected: true},
 		{name: "Suffix longer than string", s: "short", suffix: "longersuffix", expected: false},
-		{name: "Empty string, empty suffix", s: "", suffix: "", expected: true}, // Empty string ends with empty suffix
+		{name: "Empty string, empty suffix", s: "", suffix: "", expected: true}, 
 		{name: "Empty string, non-empty suffix", s: "", suffix: "suffix", expected: false},
-		{name: "Non-empty string, empty suffix", s: "string", suffix: "", expected: true},                       // Any string ends with empty suffix
-		{name: "Suffix is substring in the middle", s: "stringsuffixstring", suffix: "suffix", expected: false}, // Only checks at the end
+		{name: "Non-empty string, empty suffix", s: "string", suffix: "", expected: true},                      
+		{name: "Suffix is substring in the middle", s: "stringsuffixstring", suffix: "suffix", expected: false}, 
 		{name: "Suffix with special chars", s: "string!@#$", suffix: "!@#$", expected: true},
-		{name: "String with special chars", s: "suffix!@#$", suffix: "suffix", expected: false}, // Special chars in string, not at suffix position
-		{name: "Unicode string with suffix", s: "suffix你好", suffix: "你好", expected: true},       // Unicode support in suffix
+		{name: "String with special chars", s: "suffix!@#$", suffix: "suffix", expected: false}, 
+		{name: "Unicode string with suffix", s: "suffix你好", suffix: "你好", expected: true},       
 		{name: "Unicode suffix in string", s: "你好suffix", suffix: "suffix", expected: true},
-		{name: "Unicode suffix, non-matching string", s: "suffix不匹配", suffix: "你好", expected: false}, // Non-matching unicode suffix
+		{name: "Unicode suffix, non-matching string", s: "suffix不匹配", suffix: "你好", expected: false},
 	}
 
 	for _, tc := range testCases {
@@ -501,17 +493,17 @@ func TestTrimEdge(t *testing.T) {
 	}{
 		{name: "Trim single quotes", input: "'quoted string'", expected: "quoted string"},
 		{name: "Trim double quotes", input: "\"quoted string\"", expected: "quoted string"},
-		{name: "Not quoted - no trim", input: "not quoted", expected: "ot quote"},                                   // Trims first and last char if not quotes
-		{name: "Starts with quote, ends with different char", input: "'quoted string\"", expected: "quoted string"}, // Mismatched - still trims first and last
-		{name: "Ends with quote, starts with different char", input: "\"quoted string'", expected: "quoted string"}, // Mismatched - still trims first and last
-		{name: "String length 2 - trimmed to empty", input: "ab", expected: ""},                                     // Length 2 becomes empty after trim
-		{name: "String length 1 - trimmed to empty", input: "a", expected: ""},                                      // Length 1 also becomes empty
-		{name: "Empty string - no change", input: "", expected: ""},                                                 // Empty string stays empty
-		{name: "String with leading/trailing spaces and quotes", input: "  ' quoted '  ", expected: " ' quoted ' "}, // Trim edge spaces and quotes
-		{name: "String with only spaces - trimmed", input: "   ", expected: " "},                                    // Trimmed spaces
+		{name: "Not quoted - no trim", input: "not quoted", expected: "ot quote"},                                   
+		{name: "Starts with quote, ends with different char", input: "'quoted string\"", expected: "quoted string"}, 
+		{name: "Ends with quote, starts with different char", input: "\"quoted string'", expected: "quoted string"}, 
+		{name: "String length 2 - trimmed to empty", input: "ab", expected: ""},                                     
+		{name: "String length 1 - trimmed to empty", input: "a", expected: ""},                                      
+		{name: "Empty string - no change", input: "", expected: ""},                                                 
+		{name: "String with leading/trailing spaces and quotes", input: "  ' quoted '  ", expected: " ' quoted ' "}, 
+		{name: "String with only spaces - trimmed", input: "   ", expected: " "},                                    
 		{name: "String with special chars and quotes", input: "'!@#$%^&'", expected: "!@#$%^&"},
-		{name: "Unicode string with quotes", input: "\"你好世界\"", expected: "你好世界"}, // Unicode with quotes trimming
-		{name: "Unicode string without quotes", input: "你好世界", expected: "好世"},    // Trims first and last rune (could be multi-byte)
+		{name: "Unicode string with quotes", input: "\"你好世界\"", expected: "你好世界"}, 
+		{name: "Unicode string without quotes", input: "你好世界", expected: "好世"},   
 	}
 
 	for _, tc := range testCases {
@@ -524,7 +516,6 @@ func TestTrimEdge(t *testing.T) {
 	}
 }
 
-// Helper function to get executable suffix based on OS
 func exeSuffix() string {
 	if runtime.GOOS == "windows" {
 		return ".exe"

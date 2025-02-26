@@ -17,7 +17,6 @@ import (
 func TestTypeCommand_Execute(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create a dummy executable file in the temp dir for testing PATH lookup
 	executableName := "test_executable"
 	if runtime.GOOS == "windows" {
 		executableName += ".exe"
@@ -35,7 +34,7 @@ func TestTypeCommand_Execute(t *testing.T) {
 		pathEnv        string
 		expectedOutput string
 		wantErr        error
-		setupEnv       func() func() // Function to setup and teardown environment
+		setupEnv       func() func() 
 	}{
 		{
 			name:           "No arguments",
@@ -94,7 +93,7 @@ func TestTypeCommand_Execute(t *testing.T) {
 			builtins:       []string{"echo", "pwd"},
 			pathEnv:        tmpDir,
 			expectedOutput: "echo is a shell builtin\n" + fmt.Sprintf("test_executable is %s\n", executablePath),
-			wantErr:        utils.ErrCommandNotFound, // only last error is returned if multiple errors occur, but Execute doesn't return error in loop anymore.
+			wantErr:        utils.ErrCommandNotFound, 
 			setupEnv: func() func() {
 				originalPath := os.Getenv("PATH")
 				os.Setenv("PATH", tmpDir+string(os.PathListSeparator)+originalPath)
@@ -105,10 +104,10 @@ func TestTypeCommand_Execute(t *testing.T) {
 		},
 		{
 			name:           "External command in different case (PATH sensitive)",
-			input:          []string{"Test_Executable"}, // Different case
+			input:          []string{"Test_Executable"},
 			builtins:       []string{"echo"},
 			pathEnv:        tmpDir,
-			expectedOutput: "", // Not found because of case sensitivity on Linux/macOS
+			expectedOutput: "",
 			wantErr:        utils.ErrCommandNotFound,
 			setupEnv: func() func() {
 				originalPath := os.Getenv("PATH")
@@ -127,9 +126,9 @@ func TestTypeCommand_Execute(t *testing.T) {
 				defer teardownEnv()
 			}
 			if tc.pathEnv != "" {
-				os.Setenv("PATH", tc.pathEnv) // For test cases that don't use setupEnv
+				os.Setenv("PATH", tc.pathEnv)
 			} else if tc.setupEnv == nil && tc.pathEnv == "" && strings.Contains(tc.name, "PATH not set") {
-				os.Unsetenv("PATH") // specifically for "PATH not set" test case
+				os.Unsetenv("PATH")
 			}
 
 			cmd := NewTypeCommand(tc.builtins)
@@ -151,11 +150,9 @@ func TestTypeCommand_Execute(t *testing.T) {
 				t.Errorf("Test case '%s': Output mismatch:\nexpected:\n'%s'\ngot:\n'%s'", tc.name, tc.expectedOutput, actualOutput)
 			}
 
-			// Reset PATH for subsequent tests if not using setupEnv
 			if tc.setupEnv == nil && tc.pathEnv != "" {
 				os.Unsetenv("PATH")
 			} else if tc.setupEnv == nil && tc.pathEnv == "" && strings.Contains(tc.name, "PATH not set") {
-				//do nothing, PATH unset as part of test setup
 			}
 		})
 	}
@@ -164,7 +161,6 @@ func TestTypeCommand_Execute(t *testing.T) {
 func TestTypeCommand_findCommand(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create a dummy executable file in the temp dir for testing PATH lookup
 	executableName := "test_executable"
 	if runtime.GOOS == "windows" {
 		executableName += ".exe"
@@ -188,7 +184,7 @@ func TestTypeCommand_findCommand(t *testing.T) {
 			name:           "Builtin command - findCommand",
 			cmdInput:       "echo",
 			builtins:       []string{"echo"},
-			expectedOutput: "", // Builtin command findCommand returns empty output, prints to stdout directly.
+			expectedOutput: "", 
 			wantErr:        nil,
 		},
 		{
@@ -240,12 +236,11 @@ func TestTypeCommand_findCommand(t *testing.T) {
 			if tc.pathEnv != "" {
 				os.Setenv("PATH", tc.pathEnv)
 			} else if tc.setupEnv == nil && tc.pathEnv == "" && strings.Contains(tc.name, "PATH not set") {
-				os.Unsetenv("PATH") // specifically for "PATH not set" test case
+				os.Unsetenv("PATH") 
 			}
 
 			cmd := NewTypeCommand(tc.builtins)
 
-			// Redirect stdout to capture output from builtin check in findCommand
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
@@ -277,22 +272,20 @@ func TestTypeCommand_findCommand(t *testing.T) {
 
 			expectedFullOutput := tc.expectedOutput
 			if tc.builtins != nil && containsString(tc.builtins, tc.cmdInput) {
-				expectedFullOutput = fmt.Sprintf("%s is a shell builtin", tc.cmdInput) // Expected from builtin check
+				expectedFullOutput = fmt.Sprintf("%s is a shell builtin", tc.cmdInput) 
 			}
 
-			fullOutput := capturedOutput + resultOutput // Combine captured stdout and returned string
+			fullOutput := capturedOutput + resultOutput 
 
-			if !strings.Contains(fullOutput, expectedFullOutput) && expectedFullOutput != "" { // using contains since paths can be slightly different
+			if !strings.Contains(fullOutput, expectedFullOutput) && expectedFullOutput != "" { 
 				t.Errorf("Test case '%s': Output mismatch:\nexpected to contain:\n'%s'\ngot:\n'%s'", tc.name, expectedFullOutput, fullOutput)
-			} else if expectedFullOutput == "" && fullOutput != "" { // For cases where empty string is expected, verify no output
+			} else if expectedFullOutput == "" && fullOutput != "" { 
 				t.Errorf("Test case '%s': Output mismatch:\nexpected empty string, but got:\n'%s'", tc.name, fullOutput)
 			}
 
-			// Reset PATH for subsequent tests if not using setupEnv
 			if tc.setupEnv == nil && tc.pathEnv != "" {
 				os.Unsetenv("PATH")
 			} else if tc.setupEnv == nil && tc.pathEnv == "" && strings.Contains(tc.name, "PATH not set") {
-				//do nothing, PATH unset as part of test setup
 			}
 		})
 	}

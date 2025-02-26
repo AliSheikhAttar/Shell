@@ -11,13 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// ExitCommand implements the 'exit' built-in command
 type ExitCommand struct {
 	user *user.User
 	db   *gorm.DB
 }
 
-// NewExitCommand creates a new exit command
 func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand {
 	return &ExitCommand{
 		user: user,
@@ -25,12 +23,10 @@ func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand {
 	}
 }
 
-// Name returns the name of the command
 func (c *ExitCommand) Name() string {
 	return "exit"
 }
 
-// Execute handles the exit command execution
 func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
 
 	switch len(args) {

@@ -13,7 +13,7 @@ func TestCatCommand(t *testing.T) {
 		name        string
 		args        []string
 		expectedOutput string
-		wantErr     bool // Changed wantErr to boolean
+		wantErr     bool 
 		setup       func(tempDir string) (filePaths []string, err error)
 	}{
 		{
@@ -39,7 +39,7 @@ func TestCatCommand(t *testing.T) {
 			name: "multiple files",
 			args: []string{"test_file1.txt", "test_file2.txt"},
 			expectedOutput: "Content of file 1\nContent of file 2\n",
-			wantErr:     false, // Not expecting an error
+			wantErr:     false,
 			setup: func(tempDir string) (filePaths []string, error error) {
 				file1Path := filepath.Join(tempDir, "test_file1.txt")
 				err := os.WriteFile(file1Path, []byte("Content of file 1\n"), 0644)
@@ -57,13 +57,13 @@ func TestCatCommand(t *testing.T) {
 		{
 			name:    "non-existent file",
 			args:    []string{"non_existent_file.txt"},
-			wantErr: true, // Expecting an error
+			wantErr: true, 
 		},
 		{
 			name: "mixed valid and non-existent files",
 			args: []string{"test_file1.txt", "non_existent_file.txt"},
 			expectedOutput: "Content of file 1\n", // Should print valid file content before error
-			wantErr:      true, // Expecting an error
+			wantErr:      true, 
 			setup: func(tempDir string) (filePaths []string, error error) {
 				filePath := filepath.Join(tempDir, "test_file1.txt")
 				err := os.WriteFile(filePath, []byte("Content of file 1\n"), 0644)
@@ -77,7 +77,7 @@ func TestCatCommand(t *testing.T) {
 			name: "file with empty lines",
 			args: []string{"test_file1.txt"},
 			expectedOutput: "Line 1\n\nLine 3\n",
-			wantErr:     false, // Not expecting an error
+			wantErr:     false, 
 			setup: func(tempDir string) (filePaths []string, error error) {
 				filePath := filepath.Join(tempDir, "test_file1.txt")
 				content := "Line 1\n\nLine 3\n"
@@ -92,7 +92,7 @@ func TestCatCommand(t *testing.T) {
 			name: "file with no newline at end",
 			args: []string{"test_file1.txt"},
 			expectedOutput: "Line 1", // scanner.Scan() should handle no newline at end
-			wantErr:     false, // Not expecting an error
+			wantErr:     false, 
 			setup: func(tempDir string) (filePaths []string, error error) {
 				filePath := filepath.Join(tempDir, "test_file1.txt")
 				content := "Line 1"
@@ -128,7 +128,7 @@ func TestCatCommand(t *testing.T) {
 				}
 				// Modify args to use full file paths in temp directory
 				for i, arg := range tt.args {
-					if strings.HasPrefix(arg, "test_file") { // simple way to replace test_file names in args
+					if strings.HasPrefix(arg, "test_file") { 
 						for _, filePath := range filePaths {
 							if strings.HasSuffix(filePath, arg) {
 								tt.args[i] = filePath
@@ -139,23 +139,19 @@ func TestCatCommand(t *testing.T) {
 				}
 			}
 
-			// Capture stdout
 			stdout := &bytes.Buffer{}
 			err = cmd.Execute(tt.args, stdout)
 
-			// Check error - Simplified to boolean check
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("Expected error, but got nil")
 				}
-				// We are no longer checking the specific error type here
 			} else if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
 
-			// Check output
 			gotOutput := strings.TrimSpace(stdout.String())
-			expectedOutput := strings.TrimSpace(tt.expectedOutput) // trim to handle possible newline inconsistencies in tests
+			expectedOutput := strings.TrimSpace(tt.expectedOutput) 
 			if gotOutput != expectedOutput {
 				t.Errorf("CatCommand.Execute() output = \n%v\n, want \n%v", gotOutput, expectedOutput)
 			}

@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	// "runtime"
 )
 
 type PwdCommand struct{}

@@ -28,13 +28,6 @@ func ParseRedirection(args []string) ([]string, *Redirection, error) {
 	if len(args) == 0 {
 		return args, nil, nil
 	}
-	// for _, initQuote := range initialQuotes {
-	// 	for i := 0; i < len(initQuote); i++ {
-	// 		if string(initQuote[i]) == ">" {
-	// 			return args, nil, nil
-	// 		}
-	// 	}
-	// }
 	for i, arg := range args {
 		switch {
 		case arg == ">":

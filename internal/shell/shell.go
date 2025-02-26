@@ -50,8 +50,8 @@ type std struct {
 	isRedirected bool
 }
 type redirect struct {
-	stdout *std
-	stderr *std
+	stdout    *std
+	stderr    *std
 	redirType redirection.RedirectionType
 }
 
@@ -248,16 +248,11 @@ func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Write
 }
 
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
-	// var quotes []string
-	// var quotes1 []string
 	redirects := &redirect{stdout: &std{os.Stdout, false}, stderr: &std{os.Stderr, false}}
 	parsedArg, err1 := utils.ParseArgs(input)
 	if err1 != nil {
 		return "", nil, redirects, nil
 	}
-	// quotes1, _ = utils.ExtractQuotes(input)
-	// quotes, err1 = utils.ExtractQuotes(parsedArg)
-	// fields := utils.Seperate(parsedArg, quotes)
 	if len(parsedArg) == 0 {
 		return "", nil, redirects, nil
 	}

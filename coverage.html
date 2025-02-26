@@ -217,72 +217,62 @@ var (
         ErrNoFileDir = errors.New("no such file or directory")
 )
 
-// CDCommand implements the 'cd' built-in command
 type CDCommand struct {
         rootDir string
 }
 
-// NewCDCommand creates a new cd command
-func NewCDCommand(rootDir string) *CDCommand <span class="cov8" title="1">{
+func NewCDCommand(rootDir string) *CDCommand {
         return &amp;CDCommand{
                 rootDir: rootDir,
         }
-}</span>
+}
 
-// Name returns the name of the command
-func (c *CDCommand) Name() string <span class="cov8" title="1">{
+f</span>unc (c *CDCommand) Name() string {
         return "cd"
-}</span>
+}
 
-// Execute handles the cd command execution
-func (c *CDCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        var dir string
+func (c *CDCommand) Execute(args []string, stdout io.Writer) error {
+        </span>var dir string
 
-        switch len(args) </span>{
-        case 0:<span class="cov8" title="1">
-                // cd without arguments - go to home directory
-                dir = c.rootDir</span>
-        case 1:<span class="cov8" title="1">
-                // cd with one argument
-                switch args[0] </span>{
-                case "~":<span class="cov8" title="1">
-                        // cd ~ - go to home directory
-                        dir = os.Getenv("HOME")</span>
-                default:<span class="cov8" title="1">
-                        // cd &lt;path&gt; - go to specified directory
-                        dir = args[0]
-                        // Handle relative paths that start with ~
-                        if len(dir) &gt; 0 &amp;&amp; dir[0] == '~' </span><span class="cov8" title="1">{
-                                home := os.Getenv("HOME")
-                                dir = filepath.Join(home, dir[1:])
-                                break</span>
+        switch len(args) {
+        case 0:
+                dir = c.rootDir
+        case 1:
+                switch args[0] {</span>
+                case "<span class="cov8" title="1">~":
+                        dir = os.Getenv("HOME")
+                default:
+</span>                        dir =<span class="cov8" title="1"> args[0]
+                        if len(dir) &gt; 0 &amp;&amp; dir[0] == '~' {
+                                home := os.Ge</span>tenv("HOME")
+                                dir = f<span class="cov8" title="1">ilepath.Join(home, dir[1:])
+                                break
                         }
-                        <span class="cov8" title="1">if dir == ".." </span><span class="cov8" title="1">{
+</span>                        if dir <span class="cov8" title="1">== ".." {
                                 currentDir, err := utils.CurrentPwd()
-                                if err != nil </span><span class="cov0" title="0">{
+                                if err != nil {
                                         return err
-                                }</span>
-                                <span class="cov8" title="1">currentCleanDir := filepath.Clean(currentDir)
-                                dirArgs := strings.Split(currentCleanDir, "/")
-                                dirArgs = dirArgs[:len(dirArgs)-1]
-                                newDir := strings.Join(dirArgs, "/")
-                                if utils.IsValidDirectory(newDir) </span><span class="cov8" title="1">{
-                                        dir = newDir
-                                        break</span>
-
                                 }
-                        }
+</span>                                currentCleanDir := filepath.Clean(currentDir)
+                                dirArgs := strings.Split(currentCleanDir, "/")
+                                dirAr</span>gs = dirArgs[:len(dirArgs)-1]
+                                newDir := strings.Join(dirArgs, "/")
+                        <span class="cov8" title="1">        if utils.IsVal</span><span class="cov8" title="1">idDirectory(newDir) {
+                                        dir = newDir
+                                        break
+</span>
+                                }</span>
+                        }<span class="cov8" title="1">
                 }
-        default:<span class="cov8" title="1">
-                return utils.ErrTooManyArgs</span>
+        default:
+                return utils.ErrTooManyArgs
+        }
+</span>
+        if err :=</span> os.Chdir(dir); err != nil {
+                return ErrNoFileDir
         }
 
-        // Try to change directory
-        <span class="cov8" title="1">if err := os.Chdir(dir); err != nil </span><span class="cov8" title="1">{
-                return ErrNoFileDir
-        }</span>
-
-        <span class="cov8" title="1">return nil</span>
+        return nil
 }
 </pre>
 		
@@ -296,60 +286,56 @@ import (
         "strings"
 )
 
-// CDCommand implements the 'cd' built-in command
 type ColorCommand struct {
         envVar string
 }
 
-// NewCDCommand creates a new cd command
-func NewColorCommand() *ColorCommand <span class="cov8" title="1">{
+func NewColorCommand() *ColorCommand {
         colorCmd := &amp;ColorCommand{envVar: "SHELLCOLOR"}
         os.Setenv(colorCmd.envVar, "1")
         return colorCmd
-}</span>
+}
 
-// Name returns the name of the command
-func (c *ColorCommand) Name() string <span class="cov8" title="1">{
+f</span>unc (c *ColorCommand) Name() string {
         return "color"
-}</span>
+}
 
-// Execute handles the cd command execution
-func (c *ColorCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        switch len(args) </span>{
-        case 0:<span class="cov8" title="1">
-                return utils.ErrNotEnoughArgs</span>
-        case 1:<span class="cov8" title="1">
+func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
+        </span>switch len(args) {
+        case 0:
+                return utils.ErrNotEnoughArgs
+        case 1:
 
-                if strings.ToLower(args[0]) == "off" </span><span class="cov8" title="1">{
+</span>                if str<span class="cov8" title="1">ings.ToLower(args[0]) == "off" {
                         return c.unSet(stdout)
-                }</span>
-                <span class="cov8" title="1">if strings.ToLower(args[0]) == "on" </span><span class="cov8" title="1">{
+</span>                }
+                if strings.ToLower(args[0]) == "on" {
                         return c.set(stdout)
-                }</span>
-                <span class="cov8" title="1">return utils.ErrUnvalidArg</span>
-        default:<span class="cov8" title="1">
-                return utils.ErrTooManyArgs</span>
+</span>                }
+                r</span>eturn utils.ErrUnvalidArg
+        d<span class="cov8" title="1">efault:
+</span>                return utils.ErrTooManyArgs
         }
-}
+</span>}
+</span>
+func (c *ColorCommand) unSet(</span>stdout io.Writer) error {
 
-func (c *ColorCommand) unSet(stdout io.Writer) error <span class="cov8" title="1">{
-
-        if _, ok := os.LookupEnv(c.envVar); !ok </span><span class="cov8" title="1">{
+        if _, ok := os.LookupEnv(c.envVar); !ok {
                 return utils.ErrColorUnset
-        }</span>
-        <span class="cov8" title="1">os.Unsetenv(c.envVar)
-        fmt.Fprintln(stdout, "Color is set off")
-        return nil</span>
+        }
+        os.Unsetenv(c.envVar)
+        fmt.Fprintln(stdout, "Color is set off")</span><span class="cov8" title="1">
+        return nil
 }
-func (c *ColorCommand) set(stdout io.Writer) error <span class="cov8" title="1">{
-        if _, ok := os.LookupEnv(c.envVar); ok </span><span class="cov8" title="1">{
-                return utils.ErrColorSet
-        }</span>
-        <span class="cov8" title="1">os.Setenv(c.envVar, "1")
+</span>f<span class="cov8" title="1">unc (c *ColorCommand) set(stdout io.Writer) error {
+        if _, ok := os.LookupEnv(c.envVar); ok {
+                return ut</span>ils.ErrColorSet
+        }
+        os.Setenv(c.envVar, "1")
 
-        fmt.Fprintln(stdout, utils.ColorText("Color is set on", utils.TextBlue))
-        return nil</span>
-}
+</span>        fmt.Fprintln(stdout, utils.ColorText("Color is set on", utils.TextBlue))
+        r</span>eturn nil
+}<span class="cov8" title="1">
 </pre>
 		
 		<pre class="file" id="file4" style="display: none">package echo
@@ -390,51 +376,47 @@ import (
         "gorm.io/gorm"
 )
 
-// ExitCommand implements the 'exit' built-in command
 type ExitCommand struct {
         user *user.User
         db   *gorm.DB
 }
 
-// NewExitCommand creates a new exit command
-func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand <span class="cov8" title="1">{
+func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand {
         return &amp;ExitCommand{
                 user: user,
                 db:   db,
         }
-}</span>
-
-// Name returns the name of the command
-func (c *ExitCommand) Name() string <span class="cov8" title="1">{
-        return "exit"
-}</span>
-
-// Execute handles the exit command execution
-func (c *ExitCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-
-        switch len(args) </span>{
-        case 0:<span class="cov0" title="0">
-                if c.user.Username != "" </span><span class="cov0" title="0">{
-                        user.Update(c.db, c.user)
-                }</span>
-                <span class="cov0" title="0">fmt.Fprintln(stdout, "exit status 0")
-                os.Exit(0)</span>
-
-        case 1:<span class="cov8" title="1">
-                if c.user.Username != "" </span><span class="cov0" title="0">{
-                        user.Update(c.db, c.user)
-                }</span>
-                <span class="cov8" title="1">status, err := strconv.Atoi(args[0])
-                if err != nil </span><span class="cov8" title="1">{
-                        return utils.ErrInvalidArgs
-                }</span>
-                <span class="cov0" title="0">fmt.Fprintln(stdout, "exit status ", status)
-                os.Exit(0)</span>
-        default:<span class="cov8" title="1">
-                return utils.ErrTooManyArgs</span>
-        }
-        <span class="cov0" title="0">return nil</span>
 }
+
+f</span>unc (c *ExitCommand) Name() string {
+        return "exit"
+}
+
+func (c *ExitCommand) Execute(args []string, stdout io.Writer) error {
+
+</span>        switch len(args) {
+        case 0:
+                if c.user.Username != "" {
+                        user.Update(c.db, c.user)
+                }
+</span>                fmt.Fp<span class="cov0" title="0">rintln(stdout, "exit status 0")
+                os.Exit(0)
+</span>
+        ca</span>se 1:
+                <span class="cov0" title="0">if c.user.Username != "" {
+                        user.Upda</span>te(c.db, c.user)
+                }
+                status<span class="cov8" title="1">, err := strconv.Atoi(args[0])
+                if err != nil {
+</span>                        return utils.ErrInvalidArgs
+                }</span>
+                <span class="cov8" title="1">fmt.Fprintln(stdout, "exit status ", status)
+                os.Exit(0)
+</span>        default:
+                r</span>eturn utils.ErrTooManyArgs
+        }<span class="cov0" title="0">
+        return nil
+</span>}
 </pre>
 		
 		<pre class="file" id="file6" style="display: none">package help
@@ -460,9 +442,8 @@ func (c *HelpCommand) Execute(args []string, stdout io.Writer) error <span class
         if len(args) &gt; 0 </span><span class="cov8" title="1">{
                 return utils.ErrInvalidArgs
         }</span>
-        // Updated map to include usage for each command
-        <span class="cov8" title="1">commands := map[string][2]string{
-                
+        commands := map[string][2]string{
+        <span class="cov8" title="1">        
                 "cd":      {"change your directory", "cd &lt;path&gt;"},
                 "ls":      {"see the content of the directory", "ls [options]"},
                 "cat":     {"see the content of the files", "cat &lt;filename&gt;"},
@@ -478,20 +459,17 @@ func (c *HelpCommand) Execute(args []string, stdout io.Writer) error <span class
         }
 
         fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
-        // Adding the new "Usage" header
         coloredCommand := utils.ColorText("Command", utils.TextBlue, utils.Bold)
         coloredDescription := utils.ColorText("Description", utils.TextBlue, utils.Bold)
         coloredUsage := utils.ColorText("Usage", utils.TextBlue, utils.Bold)
-        // Format now includes the "Usage" column
         fmt.Fprintf(stdout, "|   %s   |             %s           |           %s                       |\n", coloredCommand, coloredDescription, coloredUsage)
         fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
-        for key, val := range commands </span><span class="cov8" title="1">{
+        for key, val := range commands {
                 coloredKey := utils.ColorText(key, utils.TextYellow)
-                // The third element (val[1]) is the "Usage" information
                 fmt.Fprintf(stdout, "| %-20s | %-42s | %-46s |\n", coloredKey, utils.ColorText(val[0], utils.TextMagenta), utils.ColorText(val[1], utils.TextCyan))
-        }</span>
-        <span class="cov8" title="1">fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
-        return nil</span>
+        }
+</span>        fmt.Fprintln(stdout, "-------------------------------------------------------------------------------------------")
+        return nil
 }
 </pre>
 		
@@ -669,108 +647,94 @@ import (
         "time"
 )
 
-// LSCommand implements the 'ls' built-in command
 type LSCommand struct {
         showAll    bool
         longFormat bool
 }
 
-// NewLSCommand creates a new ls command
-func NewLSCommand() *LSCommand <span class="cov8" title="1">{
+func NewLSCommand() *LSCommand {
         return &amp;LSCommand{}
-}</span>
+}
 
-// Name returns the name of the command
-func (c *LSCommand) Name() string <span class="cov0" title="0">{
+f</span>unc (c *LSCommand) Name() string {
         return "ls"
-}</span>
+}
 
-// Execute handles the ls command execution
-func (c *LSCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        // Parse arguments and options
-        dirPath, err := c.parseArgs(args)
-        if err != nil </span><span class="cov8" title="1">{
+func (c *LSCommand) Execute(args []string, stdout io.Writer) error {
+        </span>dirPath, err := c.parseArgs(args)
+        if err != nil {
                 return err
-        }</span>
+        }
 
-        // If no directory specified, use current directory
-        <span class="cov8" title="1">if dirPath == "" </span><span class="cov8" title="1">{
-                dirPath = "."
-        }</span>
+        if dirPath == "" {
+                dirPath = "."</span><span class="cov8" title="1">
+        }
 
-        <span class="cov8" title="1">return c.listDirectory(dirPath, stdout)</span>
+</span>        return c.listDirectory(dirPath, stdout)
 }
 
-// parseArgs processes command line arguments and returns the target directory
-func (c *LSCommand) parseArgs(args []string) (string, error) <span class="cov8" title="1">{
-        var dirPath string
+</span>func (c *LSCommand) parseArgs(args []string) (string, error) {
+        v</span>ar dirPath string
         c.showAll = false
-        c.longFormat = false
-        for _, arg := range args </span><span class="cov8" title="1">{
-                if strings.HasPrefix(arg, "-") </span><span class="cov8" title="1">{
-                        // Process options
-                        for _, opt := range arg[1:] </span><span class="cov8" title="1">{
-                                switch opt </span>{
-                                case 'a':<span class="cov8" title="1">
-                                        c.showAll = true</span>
-                                case 'l':<span class="cov8" title="1">
-                                        c.longFormat = true</span>
-                                default:<span class="cov8" title="1">
-                                        return "", fmt.Errorf("invalid option: %c", opt)</span>
+        <span class="cov8" title="1">c.longFormat = false
+</span>        for _, arg := range args {
+                if strings.HasPrefix(arg, "-") {
+                        for _, opt := range arg[1:] {
+                                switch opt {
+                                case 'a':
+                                        c.showAll = true
+                                case 'l':
+                                        c.longFormat = true
+</span>                                default:
+</span>                                        return "", fmt.Errorf("invalid option: %c", opt)
                                 }
+</span>                        }
+</span>                } else {
+                        if dirPath != "" {</span>
+                                return ""<span class="cov8" title="1">, utils.ErrTooManyArgs
                         }
-                } else<span class="cov8" title="1"> {
-                        // Process directory path
-                        if dirPath != "" </span><span class="cov8" title="1">{
-                                return "", utils.ErrTooManyArgs
-                        }</span>
-                        <span class="cov8" title="1">dirPath = arg</span>
+</span>                        dirPath =<span class="cov8" title="1"> arg
                 }
-        }
+</span>        }
 
-        <span class="cov8" title="1">return dirPath, nil</span>
+        return <span class="cov8" title="1">dirPath, nil
 }
 
-// listDirectory lists the contents of the specified directory
-func (c *LSCommand) listDirectory(dirPath string, stdout io.Writer) error <span class="cov8" title="1">{
-        entries, err := os.ReadDir(dirPath)
-        if err != nil </span><span class="cov8" title="1">{
+</span>func (c *LSCommand) listDirectory(dirPath string, stdout io.Writer) error {
+        ent</span>ries, err := os.ReadDir(dirPath)
+        if<span class="cov8" title="1"> err != nil {</span>
                 return fmt.Errorf("cannot open directory %s: %v", dirPath, err)
-        }</span>
-
-        // Sort entries (optional, as ReadDir returns sorted entries by default)
-        <span class="cov8" title="1">for _, entry := range entries </span><span class="cov8" title="1">{
-                // Skip hidden files unless -a flag is set
-                if !c.showAll &amp;&amp; strings.HasPrefix(entry.Name(), ".") </span><span class="cov0" title="0">{
-                        continue</span>
-                }
-
-                <span class="cov8" title="1">if c.longFormat </span><span class="cov8" title="1">{
-                        if err := c.printLongFormat(entry, stdout); err != nil </span><span class="cov0" title="0">{
-                                return err
-                        }</span>
-                } else<span class="cov8" title="1"> {
-                        fmt.Fprintln(stdout, entry.Name())
-                }</span>
         }
 
-        <span class="cov8" title="1">return nil</span>
+        <span class="cov8" title="1">for _, entry := ran</span>ge entries {
+                if !c.showAll &amp;&amp; strings.HasPrefix(entry.Name(), ".") {
+                        continue
+                }
+
+                if c.longFormat {
+                        if err := c.</span><span class="cov8" title="1">printLongFormat(entry, stdout); err != nil {
+                                return err
+                </span>        }
+                } else {
+                        fmt.Fprintln(stdout, entry.Name())
+        <span class="cov8" title="1">        }
+</span>        }
+
+</span>        return nil</span>
 }
 
-// printLongFormat prints detailed file information
-func (c *LSCommand) printLongFormat(entry fs.DirEntry, stdout io.Writer) error <span class="cov8" title="1">{
+fu<span class="cov8" title="1">nc (c *LSCommand</span><span class="cov8" title="1">) printLongFormat(entry fs.DirEntry, stdout io.Writer) error {
         info, err := entry.Info()
-        if err != nil </span><span class="cov0" title="0">{
-                return fmt.Errorf("error getting info for %s: %v", entry.Name(), err)
-        }</span>
+</span>        if err != nil {
+                re</span>turn fmt.Errorf("error getting info for %s: %v", entry.Name(), err)
+        }
 
-        // Format: permissions size modified_time name
-        <span class="cov8" title="1">mode := info.Mode().String()
+        mo</span>de := info.Mode().String()
         size := info.Size()
         modTime := info.ModTime().Format(time.RFC3339[:19]) // Use shorter time format
-        name := entry.Name()
+        <span class="cov8" title="1">name := en</span>try.Name()
         fmt.Fprintf(stdout, "%s %8d %s %s\n", mode, size, modTime, name)
-        return nil</span>
+        return nil
 }
 </pre>
 		
@@ -783,46 +747,45 @@ import (
         "os"
         "path/filepath"
         "runtime"
-        // "runtime"
 )
 
 type PwdCommand struct{}
 
-func NewPwdCommand() *PwdCommand <span class="cov8" title="1">{
+func NewPwdCommand() *PwdCommand {
         return &amp;PwdCommand{}
-}</span>
-
-func (c *PwdCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        pwd, err := c.getCurrentDirectory()
-        if err != nil </span><span class="cov0" title="0">{
-                return fmt.Errorf("failed to get current directory: %v", err)
-        }</span>
-
-        <span class="cov8" title="1">_, err = fmt.Fprintln(stdout, pwd)
-        return err</span>
 }
 
-func (c *PwdCommand) getCurrentDirectory() (string, error) <span class="cov8" title="1">{
-
-        if pwd, err := filepath.Abs("."); pwd != "" &amp;&amp; err == nil </span><span class="cov8" title="1">{
-                if utils.IsValidDirectory(pwd) </span><span class="cov8" title="1">{
-                        return filepath.Clean(pwd), nil
-                }</span>
+</span>func (c *PwdCommand) Execute(args []string, stdout io.Writer) error {
+        pwd, err := c.getCurrentDirectory()
+        if err != nil {
+                return fmt.Er</span><span class="cov0" title="0">rorf("failed to get current directory: %v", err)
         }
-        // Try /proc/self/cwd on Linux
-        <span class="cov0" title="0">if runtime.GOOS == "linux" </span><span class="cov0" title="0">{
-                if pwd, err := os.Readlink("/proc/self/cwd"); err == nil </span><span class="cov0" title="0">{
-                        if utils.IsValidDirectory(pwd) </span><span class="cov0" title="0">{
-                                return filepath.Clean(pwd), nil
-                        }</span>
+
+</span>        _, err = fmt.Fprintln(stdout, pwd)
+        <span class="cov8" title="1">return err
+}
+</span>
+func (c *PwdCommand) getCurrentDirectory() (string, error) {
+
+        if pwd, err := filepath.Abs("."); pwd != "" &amp;&amp; err == nil {
+                if utils.IsValidDirectory(pwd) {
+</span>                        return filepath.Clean(pwd), ni</span><span class="cov8" title="1">l
                 }
         }
-        <span class="cov0" title="0">return "", nil</span>
-}
-
-func (c *PwdCommand) Name() string <span class="cov8" title="1">{
+</span>        // Try /proc/self/cwd on Linux
+        if runtime.GOOS == "linux" {
+        <span class="cov0" title="0">        if pwd, err := os.Readlink</span><span class="cov0" title="0">("/proc/self/cwd"); err == nil {
+                        if utils.IsValidDirectory(pwd) {
+</span>                                return filepath.Clean(pwd), ni</span><span class="cov0" title="0">l
+                        }
+                }
+</span>        }
+        return "", nil
+}<span class="cov0" title="0">
+</span>
+func (c *PwdCommand) Name() string {
         return "pwd"
-}</span>
+}
 </pre>
 		
 		<pre class="file" id="file12" style="display: none">package typecmd
@@ -837,66 +800,61 @@ import (
 )
 
 type TypeCommand struct {
-        builtins map[string]bool // Map of built-in commands
+        builtins map[string]bool 
 }
 
 func NewTypeCommand(builtins []string) *TypeCommand <span class="cov8" title="1">{
-        // Create a map of built-in commands for efficient lookup
         builtinsMap := make(map[string]bool)
-        for _, cmd := range builtins </span><span class="cov8" title="1">{
+        for _, cmd := range builtins {
                 builtinsMap[cmd] = true
-        }</span>
+</span>        }
 
-        <span class="cov8" title="1">return &amp;TypeCommand{
-                builtins: builtinsMap,
-        }</span>
+</span>        return &amp;TypeCommand{
+        <span class="cov8" title="1">        builtins: builtinsMap,
+        }
 }
-
-func (c *TypeCommand) Name() string <span class="cov0" title="0">{
+</span>
+func (c *TypeCommand) Name() string {
         return "type"
-}</span>
-
-func (c *TypeCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        if len(args) == 0 </span><span class="cov8" title="1">{
-                return utils.ErrMissingCommandName
-        }</span>
-        <span class="cov8" title="1">for _, cmd := range args </span><span class="cov8" title="1">{
-                result, err := c.findCommand(cmd)
-                if err != nil </span><span class="cov8" title="1">{
-                        return err
-                }</span>
-                <span class="cov8" title="1">fmt.Fprintln(stdout, result)</span>
-        }
-
-        <span class="cov8" title="1">return nil</span>
 }
 
-func (c *TypeCommand) findCommand(cmd string) (string, error) <span class="cov8" title="1">{
-        // Check if it's a built-in command
-        if c.builtins[cmd] </span><span class="cov8" title="1">{
-                return fmt.Sprintf("%s is a shell builtin", cmd), nil
-        }</span>
-
-        // If not built-in, search in PATH
-        <span class="cov8" title="1">path := os.Getenv("PATH")
-        if path == "" </span><span class="cov8" title="1">{
-                return "", utils.ErrEnvironmentVarNotSet
-        }</span>
-
-        // Search in each directory in PATH
-        <span class="cov8" title="1">dirs := strings.Split(path, ":")
-        for _, dir := range dirs </span><span class="cov8" title="1">{
-                fullPath := filepath.Join(dir, cmd)
-                if fileInfo, err := os.Stat(fullPath); err == nil </span><span class="cov8" title="1">{
-                        // Check if the file is executable
-                        if fileInfo.Mode()&amp;0111 != 0 </span><span class="cov8" title="1">{
-
-                                return fmt.Sprintf("%s is %s", cmd, fullPath), nil
-                        }</span>
-                }
+</span>func (c *TypeCommand) Execute(args []string, stdout io.Writer) error {
+        if len(args) == 0 {
+                return utils.ErrM</span><span class="cov8" title="1">issingCommandName
         }
+        f</span>or _, cmd := range args {
+        <span class="cov8" title="1">        result, err := c.findCom</span><span class="cov8" title="1">mand(cmd)
+                if err != nil {
+                        return err
+</span>                }
+                f</span>mt.Fprintln(stdout, result)
+        }<span class="cov8" title="1">
+</span>
+        return nil
+}<span class="cov8" title="1">
+</span>
+func (c *TypeCommand) findCommand(cmd string) (string, error) {
+        if c.builtins[cmd] {
+                return fmt.Sprintf("%s is a shell builtin", cmd), nil
+        }
+</span>
+        p</span>ath := os.Getenv("PATH")
+        if path == "" {
+                return "", utils.ErrEnvironmentVarNotSet
+        <span class="cov8" title="1">}
 
-        <span class="cov8" title="1">return "", utils.ErrCommandNotFound</span>
+</span>        dirs := strings.Split(path, ":")
+        f</span>or _, dir := range dirs {
+                fullPath := filepath.Join(dir, cmd)
+                if fileInfo, err := os.Stat(fullPath); err == nil {
+        <span class="cov8" title="1">                if fileInfo.Mode()&amp;0111 != 0 {
+
+</span>                                return fmt.Sprintf("%s is %s", cmd, fullPath), nil
+                        }
+</span>                }
+        }
+</span>
+        return "", utils.ErrCommandNotFound
 }
 </pre>
 		
@@ -1341,129 +1299,125 @@ func (s *Shell) Start() error <span class="cov0" title="0">{
         }
 }
 
-// printPrompt displays the shell prompt
-func (s *Shell) printPrompt() error <span class="cov0" title="0">{
-        currentDir, err := utils.CurrentPwd()
-        if err != nil </span><span class="cov0" title="0">{
+func (s *Shell) printPrompt() error {
+        currentDir, err := utils.CurrentPwd<span class="cov0" title="0">()
+        if err != nil {
                 return err
-        }</span>
-        <span class="cov0" title="0">addr := utils.HandleAdress(s.rootDir, currentDir)
-        user := s.user.Username
-        if utils.IsColor() </span><span class="cov0" title="0">{
-                addr = utils.ColorText(addr, utils.TextBlue)
+</span>        }
+        a</span>ddr := utils.HandleAdress(s.rootDir, currentDir)
+        <span class="cov0" title="0">user := s.user.Username
+        if utils.IsColor() {
+                addr = utils.Color</span><span class="cov0" title="0">Text(addr, utils.TextBlue)
                 user = utils.ColorText(s.user.Username, utils.TextGreen)
-        }</span>
-        <span class="cov0" title="0">if s.user.Username != "" </span><span class="cov0" title="0">{
-                _, err = fmt.Fprintf(os.Stdout, "%s:%s$ ", user, addr)
-        }</span> else<span class="cov0" title="0"> {
-                _, err = fmt.Fprintf(os.Stdout, "%s$ ", addr)
-        }</span>
-        <span class="cov0" title="0">return err</span>
-}
-
-func (s *Shell) readInput() (string, error) <span class="cov8" title="1">{
+        }
+        i</span>f s.user.Username != "" {
+        <span class="cov0" title="0">        _, err = fmt.Fprintf(os.</span><span class="cov0" title="0">Stdout, "%s:%s$ ", user, addr)
+        } else {
+                </span>_, er<span class="cov0" title="0">r = fmt.Fprintf(os.Stdout, "%s$ ", addr)
+        }
+        r</span>eturn err
+}<span class="cov0" title="0">
+</span>
+func (s *Shell) readInput() (string, error) {
         input, err := s.reader.ReadString('\n')
-        if err != nil </span><span class="cov0" title="0">{
-                return "", err
-        }</span>
-        <span class="cov8" title="1">return strings.TrimSpace(input), nil</span>
-}
-
-func (s *Shell) executeCommand(input string) (*std, error) <span class="cov8" title="1">{
+        if err != nil {
+                return "", er</span><span class="cov0" title="0">r
+        }
+        r</span>eturn strings.TrimSpace(input), nil
+}<span class="cov8" title="1">
+</span>
+func (s *Shell) executeCommand(input string) (*std, error) {
         cmd, args, redirects, err := s.parseCommand(input)
-        if cmd != "history" </span><span class="cov8" title="1">{
-                if s.user.Username != "" </span><span class="cov0" title="0">{
-                        s.user.HistoryMap[input]++
-                        // err := user.Update(s.database, &amp;s.user) // too insufficient but most reliable
-                }</span> else<span class="cov8" title="1"> {
-                        s.history[input]++
-                }</span>
+        if cmd != "history" {
+                if s.user.Username </span><span class="cov8" title="1">!= "" {
+                        s.user.HistoryMap[input]</span><span class="cov0" title="0">++
+                        // err := user.Update(s.database, &amp;s.user)
+                } else {
+                        </span>s.his<span class="cov8" title="1">tory[input]++
+                }
+        }
+</span>
+        if err != nil {
+        <span class="cov8" title="1">        return redire</span><span class="cov0" title="0">cts.stderr, err
         }
 
-        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
-                return redirects.stderr, err
-        }</span>
+</span>        if redirects.stdout.isRedirected {
 
-        <span class="cov8" title="1">if redirects.stdout.isRedirected </span><span class="cov0" title="0">{
-
-                defer redirects.stdout.std.Close()
-        }</span>
-
-        <span class="cov8" title="1">if command, exists := s.commands[cmd]; exists </span><span class="cov8" title="1">{
-                err := command.Execute(args, redirects.stdout.std)
-                if err != nil </span><span class="cov0" title="0">{
-                        return redirects.stderr, err
-                }</span>
-                <span class="cov8" title="1">return redirects.stderr, nil</span>
+</span>                defer redirects.stdout.std.Close()
         }
 
-        <span class="cov8" title="1">if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil </span><span class="cov8" title="1">{
-                return redirects.stderr, ErrCommandNotSupported
-        }</span>
+</span>        if command, exists := s.commands[cmd]; exists {
+        <span class="cov8" title="1">        err := command.Execute(args, redirects.stdout</span><span class="cov8" title="1">.std)
+                if err != nil {
+                        return redire</span><span class="cov0" title="0">cts.stderr, err
+                }
+                r</span>eturn redirects.stderr, nil
+        }<span class="cov8" title="1">
+</span>
+        if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil {
+        <span class="cov8" title="1">        return redirects.stderr, ErrCommandNotSupported
+</span>        }
 
-        <span class="cov8" title="1">return redirects.stderr, nil</span>
-}
-
-func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Writer, stderr io.Writer) error <span class="cov8" title="1">{
+</span>        return redirects.stderr, nil
+}<span class="cov8" title="1">
+</span>
+func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Writer, stderr io.Writer) error {
         execPath, err := utils.FindCommand(name)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil {
                 return err
-        }</span>
-        <span class="cov8" title="1">if utils.HasPrefix(execPath, "$builtin") </span><span class="cov0" title="0">{
-                execPath = strings.Split(execPath, ":")[1]
-        }</span>
+</span>        }
+        i</span>f utils.HasPrefix(execPath, "$builtin") {
+        <span class="cov8" title="1">        execPath = strings.Split(execPath, ":")[</span><span class="cov0" title="0">1]
+        }
 
-        <span class="cov8" title="1">cmd := exec.Command(execPath, args...)
+</span>        cmd := exec.Command(execPath, args...)
 
         cmd.Stdout = stdout
         cmd.Stderr = stderr
 
         err = cmd.Run()
-        if err != nil </span><span class="cov8" title="1">{
-                return fmt.Errorf("failed to execute %s: %v", name, err)
-        }</span>
+        if err != nil {
+                return fmt.Er</span><span class="cov8" title="1">rorf("failed to execute %s: %v", name, err)
+        }
 
-        <span class="cov8" title="1">return nil</span>
-}
-
-func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) <span class="cov8" title="1">{
-        redirects := &amp;redirect{stdout: &amp;std{os.Stdout, false}, stderr: &amp;std{os.Stderr, false}}
+</span>        return nil
+}<span class="cov8" title="1">
+</span>
+func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
+        redirects := &amp;redirect{stdout: &amp;std{os.Stdout, false}, stderr: &amp;std{os.Stderr, <span class="cov8" title="1">false}}
         parsedArg, err1 := utils.ParseArgs(input)
-        if err1 != nil </span><span class="cov0" title="0">{
-                return "", nil, redirects, nil
-        }</span>
-        <span class="cov8" title="1">if len(parsedArg) == 0 </span><span class="cov8" title="1">{
-                return "", nil, redirects, nil
-        }</span>
-        // Parse redirection
-        <span class="cov8" title="1">args, redir, err := redirection.ParseRedirection(parsedArg)
-        if err != nil </span><span class="cov0" title="0">{
-                return "", nil, redirects, err
-        }</span>
-        // Setup redirection if needed
-        <span class="cov8" title="1">if redir != nil </span><span class="cov8" title="1">{
-                file, err := redirection.SetupRedirection(redir)
-                if err != nil </span><span class="cov0" title="0">{
-                        return "", nil, redirects, err
-                }</span>
-                // Set appropriate output &amp; error
-                <span class="cov8" title="1">switch redir.Type </span>{
-                case redirection.OutputRedirect, redirection.OutputAppend:<span class="cov8" title="1">
-                        redirects.stdout.std = file
-                        redirects.stdout.isRedirected = true</span>
-                case redirection.ErrorRedirect, redirection.ErrorAppend:<span class="cov8" title="1">
-                        redirects.stderr.std = file
-                        redirects.stderr.isRedirected = true</span>
+        if err1 != nil {
+                return "", nil</span><span class="cov0" title="0">, redirects, nil
+        }
+        i</span>f len(parsedArg) == 0 {
+        <span class="cov8" title="1">        return "", nil, redire</span><span class="cov8" title="1">cts, nil
+        }
+        a</span>rgs, redir, err := redirection.ParseRedirection(parsedArg)
+        if err != nil {
+        <span class="cov8" title="1">        return "", nil, redirects, err
+        }
+</span>        if redir != nil {
+                </span>file, err := redirection.SetupRedirection(redir)
+                if err != nil {
+        <span class="cov8" title="1">                return "", nil</span><span class="cov8" title="1">, redirects, err
                 }
-                <span class="cov8" title="1">redirects.redirType = redir.Type</span>
+                switch redir.T</span><span class="cov0" title="0">ype {
+                case redirection.OutputRedirect, redirection.OutputAppend:
+                        </span>redirects.stdout.std = file
+                        redirects.stdout.isRedirected = true
+                <span class="cov8" title="1">case redirection.E</span>rrorRedirect, redirection.ErrorAppend:
+                        redirects.stderr.std = file
+                        redirects.stderr.isRedirected = true
+                }
+</span>                redirects.redirType = redir.Type
         }
         // for case : &gt; file3 cat file2
-        <span class="cov8" title="1">if parsedArg[0][0] != '&gt;' &amp;&amp; parsedArg[0][0] != '2' </span><span class="cov8" title="1">{
-                return parsedArg[0], args[1:], redirects, err1
-        }</span> else<span class="cov8" title="1"> {
+</span>        if parsedArg[0][0] != '&gt;' {
+                <span class="cov8" title="1">return parsedArg[0], args[1:], r</span>edirects, err1
+        } else {
                 return parsedArg[2], args, redirects, err1
-        }</span>
-}
+        <span class="cov8" title="1">}
+</span>}
 </pre>
 		
 		</div>

@@ -195,7 +195,7 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 	if cmd != "history" {
 		if s.user.Username != "" {
 			s.user.HistoryMap[input]++
-			// err := user.Update(s.database, &s.user) 
+			// err := user.Update(s.database, &s.user)
 		} else {
 			s.history[input]++
 		}
@@ -276,7 +276,7 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 		redirects.redirType = redir.Type
 	}
 	// for case : > file3 cat file2
-	if parsedArg[0][0] != '>' && parsedArg[0][0] != '2' {
+	if parsedArg[0][0] != '>' {
 		return parsedArg[0], args[1:], redirects, err1
 	} else {
 		return parsedArg[2], args, redirects, err1

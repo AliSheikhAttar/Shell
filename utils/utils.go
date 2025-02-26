@@ -34,12 +34,8 @@ var (
 )
 
 var LinuxBuiltins = map[string]bool{
-	"cd":      true,
-	"pwd":     true,
 	"mkdir":   true,
 	"touch":   true,
-	"exit":    true,
-	"echo":    true,
 	"export":  true,
 	"source":  true,
 	"alias":   true,

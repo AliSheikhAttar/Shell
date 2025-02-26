@@ -14,7 +14,7 @@ func NewHelpCommand() *HelpCommand {
 }
 
 func (c *HelpCommand) Name() string {
-	return "--help"
+	return "help"
 }
 
 func (c *HelpCommand) Execute(args []string, stdout io.Writer) error {

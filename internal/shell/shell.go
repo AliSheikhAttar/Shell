@@ -8,6 +8,7 @@ import (
 	"asa/shell/internal/command/color"
 	"asa/shell/internal/command/echo"
 	"asa/shell/internal/command/exit"
+	"asa/shell/internal/command/help"
 	"asa/shell/internal/command/history"
 	"asa/shell/internal/command/login"
 	"asa/shell/internal/command/logout"
@@ -22,6 +23,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -50,6 +52,7 @@ type std struct {
 type redirect struct {
 	stdout *std
 	stderr *std
+	redirType redirection.RedirectionType
 }
 
 func New() *Shell {
@@ -97,6 +100,9 @@ func New() *Shell {
 
 	historyCmd := history.NewHistoryCommand(&sh.history, &sh.user, sh.database)
 	sh.commands[historyCmd.Name()] = historyCmd
+
+	helpCmd := help.NewHelpCommand()
+	sh.commands[helpCmd.Name()] = helpCmd
 
 	shellBuiltins := []string{}
 	for cmd := range sh.commands {
@@ -176,7 +182,6 @@ func (s *Shell) readInput() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// input := ">> file.4 cat file.3"
 	return strings.TrimSpace(input), nil
 }
 
@@ -220,7 +225,7 @@ func (s *Shell) executeCommand(input string) (*std, error) {
 	return redirects.stderr, nil
 }
 
-func (s *Shell) executeSystemCommand(name string, args []string, stdout *os.File, stderr *os.File) error {
+func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Writer, stderr io.Writer) error {
 	execPath, err := utils.FindCommand(name)
 	if err != nil {
 		return err
@@ -243,21 +248,21 @@ func (s *Shell) executeSystemCommand(name string, args []string, stdout *os.File
 }
 
 func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) {
-	var quotes []string
-	var quotes1 []string
+	// var quotes []string
+	// var quotes1 []string
 	redirects := &redirect{stdout: &std{os.Stdout, false}, stderr: &std{os.Stderr, false}}
 	parsedArg, err1 := utils.ParseArgs(input)
 	if err1 != nil {
 		return "", nil, redirects, nil
 	}
-	quotes1, _ = utils.ExtractQuotes(input)
-	quotes, err1 = utils.ExtractQuotes(parsedArg)
-	fields := utils.Seperate(parsedArg, quotes)
-	if len(fields) == 0 {
+	// quotes1, _ = utils.ExtractQuotes(input)
+	// quotes, err1 = utils.ExtractQuotes(parsedArg)
+	// fields := utils.Seperate(parsedArg, quotes)
+	if len(parsedArg) == 0 {
 		return "", nil, redirects, nil
 	}
 	// Parse redirection
-	args, redir, err := redirection.ParseRedirection(fields, quotes1)
+	args, redir, err := redirection.ParseRedirection(parsedArg)
 	if err != nil {
 		return "", nil, redirects, err
 	}
@@ -276,11 +281,12 @@ func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) 
 			redirects.stderr.std = file
 			redirects.stderr.isRedirected = true
 		}
+		redirects.redirType = redir.Type
 	}
 	// for case : > file3 cat file2
-	if fields[0][0] != '>' {
-		return fields[0], args[1:], redirects, err1
+	if parsedArg[0][0] != '>' {
+		return parsedArg[0], args[1:], redirects, err1
 	} else {
-		return fields[2], args, redirects, err1
+		return parsedArg[2], args, redirects, err1
 	}
 }

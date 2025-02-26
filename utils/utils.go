@@ -29,7 +29,7 @@ var (
 	ErrNotEnoughArgs        = errors.New("not Enough Arguments")
 	ErrUnvalidArg           = errors.New("unvalid Argument")
 	ErrColorUnset           = errors.New("color is not set")
-	ErrColorWrong           = errors.New("something went wrong, couldn't color your shell")
+	ErrColorSet             = errors.New("color is already set")
 	ErrMissingCommandName   = errors.New("type: missing command name")
 )
 
@@ -97,12 +97,12 @@ func IsColor() bool {
 
 func FindCommand(cmd string) (string, error) {
 	// Check if it's a built-in command
-	builtins := []string{"exit", "echo", "cat", "type", "cd"} // Add all built-in commands here
-	for _, builtin := range builtins {
-		if builtin == cmd {
-			return fmt.Sprintf("$builtin:%s", builtin), nil
-		}
+	builtins := LinuxBuiltins
+
+	if builtins[cmd] {
+		return fmt.Sprintf("$builtin:%s", cmd), nil
 	}
+
 	// if executable file
 	if strings.Contains(cmd, "/") {
 		return cmd, nil // exec files with or without suffix
@@ -127,16 +127,16 @@ func FindCommand(cmd string) (string, error) {
 }
 
 func IsQuoted(s string) bool {
-	return (HasPrefix(s, "'") && HasSuffix(s, "'")) ||
-		(HasPrefix(s, "\"") && HasSuffix(s, "\""))
+	return (HasPrefix(s, "'") && HasSuffix(s, "'") && len(s) > 1) ||
+		(HasPrefix(s, "\"") && HasSuffix(s, "\"") && len(s) > 1)
 }
 
 func WhichQuoted(s string) string {
 
 	switch {
-	case HasPrefix(s, "'") && HasSuffix(s, "'"):
+	case HasPrefix(s, "'") && HasSuffix(s, "'") && len(s) > 1:
 		return "'"
-	case HasPrefix(s, "\"") && HasSuffix(s, "\""):
+	case HasPrefix(s, "\"") && HasSuffix(s, "\"") && len(s) > 1:
 		return "\""
 	default:
 		return ""
@@ -159,6 +159,9 @@ func HasPrefix(s string, prefix string) bool {
 }
 
 func HasSuffix(s string, suffix string) bool {
+	if len(s) < len(suffix) {
+		return false
+	}
 	w := !(s[len(s)-len(suffix):] == suffix)
 	return len(s) >= len(suffix) && !w
 }
@@ -167,77 +170,96 @@ func TrimEdge(s string) string {
 	if len(s) < 1 {
 		return s
 	}
-	return s[1 : len(s)-1]
-}
-func ExtractQuotes(input string) ([]string, error) {
-	res := []string{}
-	for i := 0; i < len(input); i++ {
-		if input[i] == '"' {
-			var result strings.Builder
-			result.WriteByte(input[i])
-			for i = i + 1; i < len(input) && input[i] != '"'; i++ {
-				result.WriteByte(input[i])
-			}
-			if i == len(input) || input[i] != '"' {
-				result.WriteByte('"') // last quote
-				res = append(res, result.String())
-				return res, ErrInvalidQuotedArg
-			}
-			result.WriteByte(input[i]) // last quote
-			res = append(res, result.String())
-		} else if input[i] == '\'' {
-			var result strings.Builder
-			result.WriteByte(input[i])
-			for i = i + 1; i < len(input) && input[i] != '\''; i++ {
-				result.WriteByte(input[i])
-			}
-			if i == len(input) || input[i] != '\'' {
-				result.WriteByte('\'') // last quote
-				res = append(res, result.String())
-				return res, ErrInvalidQuotedArg
-			}
-			result.WriteByte(input[i]) // last quote
-			res = append(res, result.String())
-		}
+	if len(s) == 1 {
+		return ""
 	}
-	return res, nil
+
+	x := []rune(s)
+	x = x[1 : len(x)-1]
+	return string(x)
 }
 
-func Seperate(input string, quotes []string) (res []string) {
-	fields := strings.Fields(input)
-	j := 0
-	for i := 0; i < len(fields); i++ {
-		if HasPrefix(fields[i], string("'")) {
-			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
-				res = append(res, quotes[j])
-				j++
-				continue
-			}
-			i++
-			for i < len(fields) && !HasSuffix(fields[i], string("'")) {
-				i++
-			}
-			res = append(res, quotes[j])
-			j++
-			continue
-		} else if HasPrefix(fields[i], string('"')) {
-			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
-				res = append(res, quotes[j])
-				j++
-				continue
-			}
-			i++
-			for i < len(fields) && !HasSuffix(fields[i], string('"')) {
-				i++
-			}
-			res = append(res, quotes[j])
-			j++
-			continue
-		}
-		res = append(res, fields[i])
-	}
-	return res
-}
+// func ExtractQuotes(input string) ([]string, error) {
+// 	res := []string{}
+// 	for i := 0; i < len(input); i++ {
+// 		if input[i] == '"' {
+// 			var result strings.Builder
+// 			result.WriteByte(input[i])
+// 			for i = i + 1; i < len(input) && input[i] != '"'; i++ {
+// 				result.WriteByte(input[i])
+// 			}
+// 			if i == len(input) || input[i] != '"' {
+// 				result.WriteByte('"') // last quote
+// 				res = append(res, result.String())
+// 				return res, ErrInvalidQuotedArg
+// 			}
+// 			result.WriteByte(input[i]) // last quote
+// 			res = append(res, result.String())
+// 		} else if input[i] == '\'' {
+// 			var result strings.Builder
+// 			result.WriteByte(input[i])
+// 			for i = i + 1; i < len(input) && input[i] != '\''; i++ {
+// 				result.WriteByte(input[i])
+// 			}
+// 			if i == len(input) || input[i] != '\'' {
+// 				result.WriteByte('\'') // last quote
+// 				res = append(res, result.String())
+// 				return res, ErrInvalidQuotedArg
+// 			}
+// 			result.WriteByte(input[i]) // last quote
+// 			res = append(res, result.String())
+// 		}
+// 	}
+// 	return res, nil
+// }
+
+// func Seperate(input string, quotes []string) (res []string) {
+// 	fields := strings.Fields(input)
+// 	j := 0
+// 	for i := 0; i < len(fields); i++ {
+// 		if HasPrefix(fields[i], string("'")) {
+// 			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
+// 				if j >= len(quotes) {
+// 					return res
+// 				}
+// 				res = append(res, quotes[j])
+// 				j++
+// 				continue
+// 			}
+// 			i++
+// 			for i < len(fields) && !HasSuffix(fields[i], string("'")) {
+// 				i++
+// 			}
+// 			if j >= len(quotes) {
+// 				return res
+// 			}
+// 			res = append(res, quotes[j])
+// 			j++
+// 			continue
+// 		} else if HasPrefix(fields[i], string('"')) {
+// 			if IsQuoted(fields[i]) && len(fields[i]) != 1 {
+// 				if j >= len(quotes) {
+// 					return res
+// 				}
+// 				res = append(res, quotes[j])
+// 				j++
+// 				continue
+// 			}
+// 			i++
+// 			for i < len(fields) && !HasSuffix(fields[i], string('"')) {
+// 				i++
+// 			}
+// 			if j >= len(quotes) {
+// 				return res
+// 			}
+// 			res = append(res, quotes[j])
+// 			j++
+// 			continue
+// 		}
+// 		res = append(res, fields[i])
+// 	}
+// 	return res
+// }
 
 func HandleAdress(baseAddr string, currentDir string) string {
 	cleanBaseAddr := strings.Trim(baseAddr, "\n")
@@ -277,73 +299,62 @@ func CurrentPwd() (string, error) {
 	return "", ErrPwdWentWrong
 }
 
-func ParseArgs(input string) (string, error) {
+func ParseArgs(input string) ([]string, error) {
 	var err error
 	escape := false
 	space := false
 	str := ""
 	i := 0
-	// cmd
-	for i = 0; i < len(input) && input[i] != ' '; i++ {
-		str += string(input[i])
-	}
+	res := []string{}
 	for i < len(input) {
 		if input[i] == ' ' {
 			escape = false
+			if !space {
+				res = append(res, str)
+				str = ""
+			}
 			space = true
 		} else if escape {
-			if space {
-				str += " "
-				space = false
-			}
+			space = false
 			str += string(input[i])
 			escape = false
 		} else if !escape {
 			if input[i] == '`' {
-				return str, ErrInvalidQuotedArg
+				return res, ErrInvalidQuotedArg
 
 			} else if input[i] == '$' {
-				if space {
-					str += " "
-					space = false
-				}
+				space = false
 				str, i = handleEnv(input, i, str)
 			} else if input[i] == '\\' {
 				escape = true
 			} else if input[i] == '\'' {
-				if space {
-					str += " "
-					space = false
-				}
+				space = false
 				str, i, err = handleSinglgQ(input, i, str)
 				if err != nil {
-					return str, err
+					return res, err
 				}
 			} else if input[i] == '"' {
-				if space {
-					str += " "
-					space = false
-				}
+				space = false
 				str, i, err = handleDoubleQ(input, i, str)
 				if err != nil {
-					return str, err
+					return res, err
 				}
 			} else {
-				if space {
-					str += " "
-					space = false
-				}
+				space = false
 				str += string(input[i])
 			}
 		} else {
-			return str, fmt.Errorf("unhandled parsing situation %s", string(input[i]))
+			return res, fmt.Errorf("unhandled parsing situation %s", string(input[i]))
 		}
 		i++
 	}
 	if escape {
-		return str, ErrInvalidQuotedArg
+		return res, ErrInvalidQuotedArg
 	}
-	return str, nil
+	if str != "" {
+		res = append(res, str)
+	}
+	return res, nil
 }
 
 func handleSinglgQ(input string, idx int, result string) (string, int, error) {
@@ -412,9 +423,6 @@ func handleEnv(input string, idx int, result string) (string, int) {
 	return res, i - 1
 }
 
-// Assuming your User struct and Update function are in the same package or accessible
-
-// MockHistoryData function to generate mock map[string]int data
 func MockHistoryData() map[string]int {
 	return map[string]int{
 		"ls":         2,
@@ -427,33 +435,29 @@ func MockHistoryData() map[string]int {
 func ClearAndFillHistoryWithMockData(db *gorm.DB) error {
 	var users []user.User
 
-	// Fetch users from the database FIRST
 	if err := db.Find(&users).Error; err != nil {
 		return fmt.Errorf("failed to retrieve users: %w", err)
 	}
 
 	for _, obj := range users {
-		fmt.Printf("Processing user: %s (ID: %d)\n", obj.Username, obj.ID) // Keep this line
+		fmt.Printf("Processing user: %s (ID: %d)\n", obj.Username, obj.ID)
 
-		// Generate mock history data
 		historyMap := MockHistoryData()
 
-		// Convert map to JSON string
 		historyJSON, err := json.Marshal(historyMap)
 		if err != nil {
 			return fmt.Errorf("failed to marshal history to JSON for user %s: %w", obj.Username, err)
 		}
 		fmt.Printf("History JSON to be saved for user %s: %s\n", obj.Username, string(historyJSON)) // ADD THIS LINE
 
-		// Update user's history field
 		obj.History = string(historyJSON)
-		if err := user.Update(db, &obj); err != nil { // Use your existing Update function
+		if err := user.Update(db, &obj); err != nil {
 			return fmt.Errorf("failed to update history for user %s: %w", obj.Username, err)
 		}
-		fmt.Printf("History updated for user: %s\n", obj.Username) // Keep this line but it might be misleading now
+		fmt.Printf("History updated for user: %s\n", obj.Username)
 	}
 
-	fmt.Println("Successfully cleared and filled history for all users.") // Keep this line - also potentially misleading
+	fmt.Println("Successfully cleared and filled history for all users.")
 	return nil
 }
 

@@ -1,4 +1,3 @@
-// internal/redirection/redirection.go
 package redirection
 
 import (
@@ -25,18 +24,17 @@ type Redirection struct {
 	File string
 }
 
-// ParseRedirection parses command arguments for redirection operators
-func ParseRedirection(args []string, initialQuotes []string) ([]string, *Redirection, error) {
+func ParseRedirection(args []string) ([]string, *Redirection, error) {
 	if len(args) == 0 {
 		return args, nil, nil
 	}
-	for _, initQuote := range initialQuotes {
-		for i := 0; i < len(initQuote); i++ {
-			if string(initQuote[i]) == ">" {
-				return args, nil, nil
-			}
-		}
-	}
+	// for _, initQuote := range initialQuotes {
+	// 	for i := 0; i < len(initQuote); i++ {
+	// 		if string(initQuote[i]) == ">" {
+	// 			return args, nil, nil
+	// 		}
+	// 	}
+	// }
 	for i, arg := range args {
 		switch {
 		case arg == ">":
@@ -116,7 +114,6 @@ func ParseRedirection(args []string, initialQuotes []string) ([]string, *Redirec
 	return args, nil, nil
 }
 
-// SetupRedirection configures the redirection for a command
 func SetupRedirection(redir *Redirection) (*os.File, error) {
 	if redir == nil {
 		return nil, nil

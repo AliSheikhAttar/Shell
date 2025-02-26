@@ -12,7 +12,6 @@ func TestParseRedirection(t *testing.T) {
 	testCases := []struct {
 		name          string
 		inputArgs     []string
-		initialQuotes []string // Added for new ParseRedirection signature
 		expectedArgs  []string
 		expectedRedir *Redirection
 		wantErr       error
@@ -20,7 +19,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "No redirection",
 			inputArgs:     []string{"ls", "-l"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"ls", "-l"},
 			expectedRedir: nil,
 			wantErr:       nil,
@@ -28,7 +26,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Output redirect > in middle",
 			inputArgs:     []string{"ls", "-l", ">", "output.txt"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"ls", "-l"},
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output.txt"},
 			wantErr:       nil,
@@ -36,7 +33,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Output append >> in middle",
 			inputArgs:     []string{"cmd", "arg1", ">>", "append.log"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"cmd", "arg1"},
 			expectedRedir: &Redirection{Type: OutputAppend, File: "append.log"},
 			wantErr:       nil,
@@ -44,7 +40,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Error redirect 2> in middle",
 			inputArgs:     []string{"command", "param", "2>", "error.log"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"command", "param"},
 			expectedRedir: &Redirection{Type: ErrorRedirect, File: "error.log"},
 			wantErr:       nil,
@@ -52,7 +47,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Error append 2>> in middle",
 			inputArgs:     []string{"run", "-opt", "2>>", "error_append.log"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"run", "-opt"},
 			expectedRedir: &Redirection{Type: ErrorAppend, File: "error_append.log"},
 			wantErr:       nil,
@@ -60,7 +54,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Missing file for output redirect > in middle",
 			inputArgs:     []string{"cmd", ">"},
-			initialQuotes: []string{},
 			expectedArgs:  nil,
 			expectedRedir: nil,
 			wantErr:       ErrMissingFileForRedirection,
@@ -68,7 +61,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Missing file for output append >> in middle",
 			inputArgs:     []string{"cmd", ">>"},
-			initialQuotes: []string{},
 			expectedArgs:  nil,
 			expectedRedir: nil,
 			wantErr:       ErrMissingFileForRedirection,
@@ -76,7 +68,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Missing file for error redirect 2> in middle",
 			inputArgs:     []string{"cmd", "2>"},
-			initialQuotes: []string{},
 			expectedArgs:  nil,
 			expectedRedir: nil,
 			wantErr:       ErrMissingFileForRedirection,
@@ -84,7 +75,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Missing file for error append 2>> in middle",
 			inputArgs:     []string{"cmd", "2>>"},
-			initialQuotes: []string{},
 			expectedArgs:  nil,
 			expectedRedir: nil,
 			wantErr:       ErrMissingFileForRedirection,
@@ -92,7 +82,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Arguments before and after redirection in middle", // Still valid as before, redirection parsing stops at operator
 			inputArgs:     []string{"command", "-arg1", ">", "output.txt", "extra_arg"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"command", "-arg1"},
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output.txt"},
 			wantErr:       nil,
@@ -100,7 +89,6 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Multiple redirection operators in middle - first one takes precedence", // Still valid as before
 			inputArgs:     []string{"cmd", ">", "output1.txt", ">>", "output2.txt"},
-			initialQuotes: []string{},
 			expectedArgs:  []string{"cmd"},
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output1.txt"},
 			wantErr:       nil,
@@ -109,57 +97,51 @@ func TestParseRedirection(t *testing.T) {
 		{
 			name:          "Output redirect > at start",
 			inputArgs:     []string{">", "output.txt", "cmd", "arg1"}, // operator, file, cmd, arg - order as per changed logic
-			initialQuotes: []string{},
-			expectedArgs:  []string{"arg1"}, // Expects args *after* redirection and filename are returned. Based on args[3:] logic.
+			expectedArgs:  []string{"arg1"},                           // Expects args *after* redirection and filename are returned. Based on args[3:] logic.
 			expectedRedir: &Redirection{Type: OutputRedirect, File: "output.txt"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Output append >> at start",
 			inputArgs:     []string{">>", "append.log", "command", "-option"}, // operator, file, cmd, arg
-			initialQuotes: []string{},
-			expectedArgs:  []string{"-option"}, // Expect args after redirection and filename
+			expectedArgs:  []string{"-option"},                                // Expect args after redirection and filename
 			expectedRedir: &Redirection{Type: OutputAppend, File: "append.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Error redirect 2> at start",
 			inputArgs:     []string{"2>", "error.log", "program", "--flag"}, // operator, file, cmd, arg
-			initialQuotes: []string{},
-			expectedArgs:  []string{"--flag"}, // Expect args after redirection and filename
+			expectedArgs:  []string{"--flag"},                               // Expect args after redirection and filename
 			expectedRedir: &Redirection{Type: ErrorRedirect, File: "error.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Error append 2>> at start",
 			inputArgs:     []string{"2>>", "error_append.log", "script", "param1"}, // operator, file, cmd, arg
-			initialQuotes: []string{},
-			expectedArgs:  []string{"param1"}, // Expect args after redirection and filename
+			expectedArgs:  []string{"param1"},                                      // Expect args after redirection and filename
 			expectedRedir: &Redirection{Type: ErrorAppend, File: "error_append.log"},
 			wantErr:       nil,
 		},
 		{
 			name:          "Missing file for output redirect > at start",
-			inputArgs:     []string{">", "cmd", "arg"}, // operator, but missing file between operator and command. According to logic, "cmd" becomes filename, and "arg" is skipped. Is this correct behavior?
-			initialQuotes: []string{},
+			inputArgs:     []string{">", "cmd", "arg"},  // operator, but missing file between operator and command. According to logic, "cmd" becomes filename, and "arg" is skipped. Is this correct behavior?
 			expectedArgs:  nil,                          // If missing file after operator at start, should it be error or just no redirection? Current code returns nil args and no redir. Review this expected behavior.
 			expectedRedir: nil,                          // No redirection as filename is missing effectively based on logic.
 			wantErr:       ErrMissingFileForRedirection, // Changed to ErrMissingFileForRedirection - more appropriate if file is indeed missing after operator.
 		},
 		// Test case for initialQuotes logic (if it's indeed relevant and intended - needs clarification from user)
 		{
-			name:          "Redirection operator in initialQuotes - no redirection parsed", // Test case for the initialQuotes check logic - if it's intended to prevent redirection.
-			inputArgs:     []string{">", "output.txt", "ls", "-l"},
-			initialQuotes: []string{">"},                           // Simulate '>' being in initial quotes, for whatever reason this logic exists in code.
-			expectedArgs:  []string{">", "output.txt", "ls", "-l"}, // Expect original args back - no redirection if '>' found in initialQuotes.
-			expectedRedir: nil,
+			name:          "Redirection operator in initialQuotes - error redirection append", // Test case for the initialQuotes check logic - if it's intended to prevent redirection.
+			inputArgs:     []string{"2>>", "output.txt", "ls", "-l"},
+			expectedArgs:  []string{"-l"}, // Expect original args back - no redirection if '>' found in initialQuotes.
+			expectedRedir: &Redirection{Type: ErrorAppend, File: "output.txt"},
 			wantErr:       nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualArgs, actualRedir, err := ParseRedirection(tc.inputArgs, tc.initialQuotes)
+			actualArgs, actualRedir, err := ParseRedirection(tc.inputArgs)
 
 			if tc.wantErr != nil {
 				if !errors.Is(err, tc.wantErr) {

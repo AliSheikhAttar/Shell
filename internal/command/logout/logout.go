@@ -25,7 +25,7 @@ func (c *LogoutCommand) Name() string {
 }
 
 func (c *LogoutCommand) Execute(args []string, stdout io.Writer) error {
-	if len(args) > 1 {
+	if len(args) > 0 {
 		return utils.ErrInvalidArgs
 	}
 

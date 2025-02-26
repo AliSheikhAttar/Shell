@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>command: Go Coverage Report</title>
+		<title>adduser: Go Coverage Report</title>
 		<style>
 			body {
 				background: black;
@@ -55,15 +55,39 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">asa/shell/internal/command/cat.go (100.0%)</option>
+				<option value="file0">asa/shell/internal/command/adduser/adduser.go (100.0%)</option>
 				
-				<option value="file1">asa/shell/internal/command/echo.go (83.0%)</option>
+				<option value="file1">asa/shell/internal/command/cat/cat.go (100.0%)</option>
 				
-				<option value="file2">asa/shell/internal/command/exit.go (58.3%)</option>
+				<option value="file2">asa/shell/internal/command/cd/cd.go (96.3%)</option>
 				
-				<option value="file3">asa/shell/internal/command/pwd.go (50.0%)</option>
+				<option value="file3">asa/shell/internal/command/color/color.go (100.0%)</option>
 				
-				<option value="file4">asa/shell/internal/command/type.go (96.2%)</option>
+				<option value="file4">asa/shell/internal/command/echo/echo.go (100.0%)</option>
+				
+				<option value="file5">asa/shell/internal/command/exit/exit.go (50.0%)</option>
+				
+				<option value="file6">asa/shell/internal/command/help/help.go (100.0%)</option>
+				
+				<option value="file7">asa/shell/internal/command/history/history.go (0.0%)</option>
+				
+				<option value="file8">asa/shell/internal/command/login/login.go (86.4%)</option>
+				
+				<option value="file9">asa/shell/internal/command/logout/logout.go (100.0%)</option>
+				
+				<option value="file10">asa/shell/internal/command/ls/ls.go (90.0%)</option>
+				
+				<option value="file11">asa/shell/internal/command/pwd/pwd.go (60.0%)</option>
+				
+				<option value="file12">asa/shell/internal/command/type/type.go (96.0%)</option>
+				
+				<option value="file13">asa/shell/internal/database/database.go (71.4%)</option>
+				
+				<option value="file14">asa/shell/internal/redirection/redirection.go (90.7%)</option>
+				
+				<option value="file15">asa/shell/internal/service/user.go (81.2%)</option>
+				
+				<option value="file16">asa/shell/internal/shell/shell.go (66.1%)</option>
 				
 				</select>
 			</div>
@@ -77,7 +101,54 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">package command
+		<pre class="file" id="file0" style="display: none">package adduser
+
+import (
+        user "asa/shell/internal/service"
+        "asa/shell/utils"
+        "io"
+
+        "gorm.io/gorm"
+)
+
+type AddUserCommand struct {
+        db   *gorm.DB
+        user *user.User
+}
+
+func NewAddUserCommand(db *gorm.DB, user *user.User) *AddUserCommand <span class="cov8" title="1">{
+        return &amp;AddUserCommand{
+                db:   db,
+                user: user,
+        }
+}</span>
+
+func (c *AddUserCommand) Name() string <span class="cov8" title="1">{
+        return "adduser"
+}</span>
+
+func (c *AddUserCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        if len(args) == 0 </span><span class="cov8" title="1">{
+                return utils.ErrUsernameRequired
+        }</span>
+        <span class="cov8" title="1">if len(args) &gt; 2 </span><span class="cov8" title="1">{
+                return utils.ErrInvalidArgs
+        }</span>
+        <span class="cov8" title="1">var pass string
+        if len(args) == 2 </span><span class="cov8" title="1">{
+                pass = args[1]
+        }</span>
+
+        <span class="cov8" title="1">newUser := &amp;user.User{Username: args[0], Password: pass}
+        err := user.RegisterUser(c.db, newUser)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package cat
 
 import (
         "bufio"
@@ -88,55 +159,204 @@ import (
 )
 
 var (
-    ErrCatNoArgs = errors.New("no argument")
+        ErrCatNoArgs = errors.New("no argument")
 )
 
 type CatCommand struct{}
 
 func NewCatCommand() *CatCommand <span class="cov8" title="1">{
-    return &amp;CatCommand{}
+        return &amp;CatCommand{}
 }</span>
 
 func (c *CatCommand) Name() string <span class="cov8" title="1">{
-    return "cat"
+        return "cat"
 }</span>
 
 func (c *CatCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-    if len(args) == 0 </span><span class="cov8" title="1">{
-        return ErrCatNoArgs
-    }</span>
-
-    <span class="cov8" title="1">for _, filename := range args </span><span class="cov8" title="1">{
-        if err := c.displayFile(filename, stdout); err != nil </span><span class="cov8" title="1">{
-            return fmt.Errorf("cat: %s -&gt; %v", filename, err)
+        if len(args) == 0 </span><span class="cov8" title="1">{
+                return ErrCatNoArgs
         }</span>
-    }
 
-    <span class="cov8" title="1">return nil</span>
+        <span class="cov8" title="1">for _, filename := range args </span><span class="cov8" title="1">{
+                if err := c.displayFile(filename, stdout); err != nil </span><span class="cov8" title="1">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
 }
 
 func (c *CatCommand) displayFile(filename string, stdout io.Writer) error <span class="cov8" title="1">{
-    file, err := os.Open(filename)
-    if err != nil </span><span class="cov8" title="1">{
-        return err
-    }</span>
-    <span class="cov8" title="1">defer file.Close()
+        file, err := os.Open(filename)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">defer file.Close()
 
-    scanner := bufio.NewScanner(file)
-    for scanner.Scan() </span><span class="cov8" title="1">{
-        fmt.Fprintln(stdout, scanner.Text())
-    }</span>
+        scanner := bufio.NewScanner(file)
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                fmt.Fprintln(stdout, scanner.Text())
+        }</span>
 
-    <span class="cov8" title="1">return scanner.Err()</span>
-}</pre>
+        <span class="cov8" title="1">return scanner.Err()</span>
+}
+</pre>
 		
-		<pre class="file" id="file1" style="display: none">package command
+		<pre class="file" id="file2" style="display: none">package cd
+
+import (
+        "asa/shell/utils"
+        "errors"
+        "io"
+        "os"
+        "path/filepath"
+        "strings"
+)
+
+var (
+        ErrNoFileDir = errors.New("no such file or directory")
+)
+
+// CDCommand implements the 'cd' built-in command
+type CDCommand struct {
+        rootDir string
+}
+
+// NewCDCommand creates a new cd command
+func NewCDCommand(rootDir string) *CDCommand <span class="cov8" title="1">{
+        return &amp;CDCommand{
+                rootDir: rootDir,
+        }
+}</span>
+
+// Name returns the name of the command
+func (c *CDCommand) Name() string <span class="cov8" title="1">{
+        return "cd"
+}</span>
+
+// Execute handles the cd command execution
+func (c *CDCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        var dir string
+
+        switch len(args) </span>{
+        case 0:<span class="cov8" title="1">
+                // cd without arguments - go to home directory
+                dir = c.rootDir</span>
+        case 1:<span class="cov8" title="1">
+                // cd with one argument
+                switch args[0] </span>{
+                case "~":<span class="cov8" title="1">
+                        // cd ~ - go to home directory
+                        dir = os.Getenv("HOME")</span>
+                default:<span class="cov8" title="1">
+                        // cd &lt;path&gt; - go to specified directory
+                        dir = args[0]
+                        // Handle relative paths that start with ~
+                        if len(dir) &gt; 0 &amp;&amp; dir[0] == '~' </span><span class="cov8" title="1">{
+                                home := os.Getenv("HOME")
+                                dir = filepath.Join(home, dir[1:])
+                                break</span>
+                        }
+                        <span class="cov8" title="1">if dir == ".." </span><span class="cov8" title="1">{
+                                currentDir, err := utils.CurrentPwd()
+                                if err != nil </span><span class="cov0" title="0">{
+                                        return err
+                                }</span>
+                                <span class="cov8" title="1">currentCleanDir := filepath.Clean(currentDir)
+                                dirArgs := strings.Split(currentCleanDir, "/")
+                                dirArgs = dirArgs[:len(dirArgs)-1]
+                                newDir := strings.Join(dirArgs, "/")
+                                if utils.IsValidDirectory(newDir) </span><span class="cov8" title="1">{
+                                        dir = newDir
+                                        break</span>
+
+                                }
+                        }
+                }
+        default:<span class="cov8" title="1">
+                return utils.ErrTooManyArgs</span>
+        }
+
+        // Try to change directory
+        <span class="cov8" title="1">if err := os.Chdir(dir); err != nil </span><span class="cov8" title="1">{
+                return ErrNoFileDir
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package color
 
 import (
         "asa/shell/utils"
         "fmt"
         "io"
         "os"
+        "strings"
+)
+
+// CDCommand implements the 'cd' built-in command
+type ColorCommand struct {
+        envVar string
+}
+
+// NewCDCommand creates a new cd command
+func NewColorCommand() *ColorCommand <span class="cov8" title="1">{
+        colorCmd := &amp;ColorCommand{envVar: "SHELLCOLOR"}
+        os.Setenv(colorCmd.envVar, "1")
+        return colorCmd
+}</span>
+
+// Name returns the name of the command
+func (c *ColorCommand) Name() string <span class="cov8" title="1">{
+        return "color"
+}</span>
+
+// Execute handles the cd command execution
+func (c *ColorCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        switch len(args) </span>{
+        case 0:<span class="cov8" title="1">
+                return utils.ErrNotEnoughArgs</span>
+        case 1:<span class="cov8" title="1">
+
+                if strings.ToLower(args[0]) == "off" </span><span class="cov8" title="1">{
+                        return c.unSet(stdout)
+                }</span>
+                <span class="cov8" title="1">if strings.ToLower(args[0]) == "on" </span><span class="cov8" title="1">{
+                        return c.set(stdout)
+                }</span>
+                <span class="cov8" title="1">return utils.ErrUnvalidArg</span>
+        default:<span class="cov8" title="1">
+                return utils.ErrTooManyArgs</span>
+        }
+}
+
+func (c *ColorCommand) unSet(stdout io.Writer) error <span class="cov8" title="1">{
+
+        if _, ok := os.LookupEnv(c.envVar); !ok </span><span class="cov8" title="1">{
+                return utils.ErrColorUnset
+        }</span>
+        <span class="cov8" title="1">os.Unsetenv(c.envVar)
+        fmt.Fprintln(stdout, "Color is set off")
+        return nil</span>
+}
+func (c *ColorCommand) set(stdout io.Writer) error <span class="cov8" title="1">{
+        if _, ok := os.LookupEnv(c.envVar); ok </span><span class="cov8" title="1">{
+                return utils.ErrColorSet
+        }</span>
+        <span class="cov8" title="1">os.Setenv(c.envVar, "1")
+
+        fmt.Fprintln(stdout, utils.ColorText("Color is set on", utils.TextBlue))
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package echo
+
+import (
+        "fmt"
+        "io"
         "strings"
 )
 
@@ -151,113 +371,37 @@ func (c *EchoCommand) Name() string <span class="cov8" title="1">{
 }</span>
 
 func (c *EchoCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
-        output := expandArgs(args)
+        output := strings.Join(args, " ")
         fmt.Fprintln(stdout, output)
         return nil
 }</span>
-
-// expandArgs processes the arguments and expands environment variables
-func expandArgs(args []string) string <span class="cov8" title="1">{
-        var result []string
-
-        for _, arg := range args </span><span class="cov8" title="1">{
-                // Check if the argument is a quoted string
-                if isQuoted(arg) </span><span class="cov8" title="1">{
-                        // Remove quotes and add as literal
-                        result = append(result, strings.Trim(arg, "'\""))
-                        continue</span>
-                }
-
-                // Expand environment variables
-                <span class="cov8" title="1">expanded := expandEnvVars(arg)
-                result = append(result, expanded)</span>
-        }
-
-        <span class="cov8" title="1">return strings.Join(result, " ")</span>
-}
-
-// expandEnvVars replaces environment variables with their values
-func expandEnvVars(s string) string <span class="cov8" title="1">{
-        var result strings.Builder
-        i := 0
-
-        for i &lt; len(s) </span><span class="cov8" title="1">{
-                if s[i] == '$' &amp;&amp; i+1 &lt; len(s) </span><span class="cov8" title="1">{
-                        j := i + 1
-                        // Find the end of the variable name
-                        for j &lt; len(s) &amp;&amp; (isAlphaNumeric(s[j]) || s[j] == '_') </span><span class="cov8" title="1">{
-                                j++
-                        }</span>
-
-                        <span class="cov8" title="1">if j &gt; i+1 </span><span class="cov8" title="1">{
-                                varName := s[i+1 : j]
-                                varValue := os.Getenv(varName)
-                                result.WriteString(varValue)
-                                i = j
-                                continue</span>
-                        }
-
-                        // cases like $"path"
-                        <span class="cov8" title="1">if utils.HasPrefix(string(s[j]), "'") </span><span class="cov8" title="1">{
-                                j++
-                                k := j + 1
-                                for !utils.HasSuffix(s[j:k], "'") </span><span class="cov8" title="1">{
-                                        k++
-                                }</span>
-
-                                <span class="cov8" title="1">result.WriteString(s[j : k-1])
-                                i = k
-                                continue</span>
-                        }
-                        <span class="cov0" title="0">if utils.HasPrefix(string(s[j]), "\"") </span><span class="cov0" title="0">{
-                                j++
-                                k := j + 1
-                                for !utils.HasSuffix(s[j:k], "\"") </span><span class="cov0" title="0">{
-                                        k++
-                                }</span>
-
-                                <span class="cov0" title="0">result.WriteString(s[j : k-1])
-                                i = k
-                                continue</span>
-                        }
-                }
-                <span class="cov8" title="1">result.WriteByte(s[i])
-                i++</span>
-        }
-
-        <span class="cov8" title="1">return result.String()</span>
-}
-
-// isQuoted checks if a string is wrapped in quotes
-func isQuoted(s string) bool <span class="cov8" title="1">{
-        return (utils.HasPrefix(s, "'") &amp;&amp; utils.HasSuffix(s, "'")) ||
-                (utils.HasPrefix(s, "\"") &amp;&amp; utils.HasSuffix(s, "\""))
-}</span>
-
-// isAlphaNumeric checks if a character is alphanumeric
-func isAlphaNumeric(c byte) bool <span class="cov8" title="1">{
-        return (c &gt;= 'a' &amp;&amp; c &lt;= 'z') ||
-                (c &gt;= 'A' &amp;&amp; c &lt;= 'Z') ||
-                (c &gt;= '0' &amp;&amp; c &lt;= '9')
-}</span>
-
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package command
+		<pre class="file" id="file5" style="display: none">package exit
 
 import (
+        user "asa/shell/internal/service"
+        "asa/shell/utils"
         "fmt"
         "io"
         "os"
         "strconv"
+
+        "gorm.io/gorm"
 )
 
 // ExitCommand implements the 'exit' built-in command
-type ExitCommand struct {}
+type ExitCommand struct {
+        user *user.User
+        db   *gorm.DB
+}
 
 // NewExitCommand creates a new exit command
-func NewExitCommand() *ExitCommand <span class="cov8" title="1">{
-        return &amp;ExitCommand{}
+func NewExitCommand(db *gorm.DB, user *user.User) *ExitCommand <span class="cov8" title="1">{
+        return &amp;ExitCommand{
+                user: user,
+                db:   db,
+        }
 }</span>
 
 // Name returns the name of the command
@@ -267,28 +411,365 @@ func (c *ExitCommand) Name() string <span class="cov8" title="1">{
 
 // Execute handles the exit command execution
 func (c *ExitCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+
         switch len(args) </span>{
         case 0:<span class="cov0" title="0">
-                fmt.Fprintln(stdout, "exit status 0")
+                if c.user.Username != "" </span><span class="cov0" title="0">{
+                        user.Update(c.db, c.user)
+                }</span>
+                <span class="cov0" title="0">fmt.Fprintln(stdout, "exit status 0")
                 os.Exit(0)</span>
 
         case 1:<span class="cov8" title="1">
-                status, err := strconv.Atoi(args[0])
+                if c.user.Username != "" </span><span class="cov0" title="0">{
+                        user.Update(c.db, c.user)
+                }</span>
+                <span class="cov8" title="1">status, err := strconv.Atoi(args[0])
                 if err != nil </span><span class="cov8" title="1">{
-                        return ErrInvalidArgs
+                        return utils.ErrInvalidArgs
                 }</span>
                 <span class="cov0" title="0">fmt.Fprintln(stdout, "exit status ", status)
                 os.Exit(0)</span>
         default:<span class="cov8" title="1">
-                return ErrTooManyArgs</span>
+                return utils.ErrTooManyArgs</span>
         }
-        <span class="cov0" title="0">return nil</span> // This line will never be reached due to os.Exit
+        <span class="cov0" title="0">return nil</span>
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package command
+		<pre class="file" id="file6" style="display: none">package help
 
 import (
+        "asa/shell/utils"
+        "fmt"
+        "io"
+)
+
+type HelpCommand struct {
+}
+
+func NewHelpCommand() *HelpCommand <span class="cov8" title="1">{
+        return &amp;HelpCommand{}
+}</span>
+
+func (c *HelpCommand) Name() string <span class="cov8" title="1">{
+        return "--help"
+}</span>
+
+func (c *HelpCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        if len(args) &gt; 0 </span><span class="cov8" title="1">{
+                return utils.ErrInvalidArgs
+        }</span>
+        <span class="cov8" title="1">commands := map[string]string{
+                "color":   "set on/off color mode",
+                "cat":     "see the content of the files",
+                "ls":      "see the content of the directory",
+                "cd":      "change your directory",
+                "echo":    "write text/variables to output",
+                "type":    "type of a command",
+                "pwd":     "current directory path",
+                "exit":    "exit the shell",
+                "history": "history of executed commands",
+                "adduser": "register user to shell",
+                "login":   "login to shell as user",
+                "logout":  "logout the shell",
+        }
+        fmt.Fprintln(stdout, "---------------------------------------------------")
+        coloredCommand := utils.ColorText("Command", utils.TextBlue, utils.Bold)
+        coloredDescription := utils.ColorText("Description", utils.TextBlue, utils.Bold)
+        fmt.Fprintf(stdout, "|   %s   |             %s           |\n", coloredCommand, coloredDescription)
+        fmt.Fprintln(stdout, "---------------------------------------------------")
+        for key, val := range commands </span><span class="cov8" title="1">{
+                coloredKey := utils.ColorText(key, utils.TextYellow)
+                fmt.Fprintf(stdout, "| %-20s | %-42s |\n", coloredKey, utils.ColorText(val, utils.TextMagenta))
+        }</span>
+        <span class="cov8" title="1">fmt.Fprintln(stdout, "---------------------------------------------------")
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package history
+
+import (
+        user "asa/shell/internal/service"
+        "asa/shell/utils"
+        "io"
+
+        "gorm.io/gorm"
+)
+
+type HistoryCommand struct {
+        builtinHistory *map[string]int
+        user           *user.User
+        db             *gorm.DB
+}
+
+func NewHistoryCommand(builtinHistory *map[string]int, user *user.User, db *gorm.DB) *HistoryCommand <span class="cov0" title="0">{
+        return &amp;HistoryCommand{
+                builtinHistory: builtinHistory,
+                user:           user,
+                db:             db,
+        }
+}</span>
+
+func (h *HistoryCommand) Name() string <span class="cov0" title="0">{
+        return "history"
+}</span>
+
+func (h *HistoryCommand) Execute(args []string, stdout io.Writer) error <span class="cov0" title="0">{
+        if len(args) &gt; 1 </span><span class="cov0" title="0">{
+                return utils.ErrInvalidArgs
+        }</span>
+        <span class="cov0" title="0">if len(args) == 1 </span><span class="cov0" title="0">{
+                if args[0] != "clean" </span><span class="cov0" title="0">{
+                        return utils.ErrInvalidArgs
+                }</span>
+                <span class="cov0" title="0">if h.user.Username != "" </span><span class="cov0" title="0">{
+                        h.user.HistoryMap = map[string]int{}
+                        err := user.Update(h.db, h.user)
+                        return err
+                }</span>
+                <span class="cov0" title="0">*h.builtinHistory = map[string]int{}
+                return nil</span>
+        }
+        <span class="cov0" title="0">if h.user.Username != "" </span><span class="cov0" title="0">{
+                if len(h.user.HistoryMap) == 0 </span><span class="cov0" title="0">{
+                        return utils.ErrEmptyHistory
+                }</span>
+                <span class="cov0" title="0">utils.PrintSortedMap(h.user.HistoryMap, stdout)
+                return nil</span>
+        }
+        <span class="cov0" title="0">if len(*h.builtinHistory) == 0 </span><span class="cov0" title="0">{
+                return utils.ErrEmptyHistory
+        }</span>
+        <span class="cov0" title="0">utils.PrintSortedMap(*h.builtinHistory, stdout)
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package login
+
+import (
+        userService "asa/shell/internal/service"
+        "asa/shell/utils"
+        "io"
+
+        "gorm.io/gorm"
+)
+
+type LoginCommand struct {
+        db   *gorm.DB
+        user *userService.User
+}
+
+func NewLoginCommand(db *gorm.DB, user *userService.User) *LoginCommand <span class="cov8" title="1">{
+        return &amp;LoginCommand{
+                db:   db,
+                user: user,
+        }
+}</span>
+
+func (c *LoginCommand) Name() string <span class="cov8" title="1">{
+        return "login"
+}</span>
+
+func (c *LoginCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        // if (*c.user).Username != "" {
+        //         return ErrLoggedin
+        // }
+        if len(args) == 0 </span><span class="cov8" title="1">{
+                return utils.ErrUsernameRequired
+        }</span>
+        <span class="cov8" title="1">if len(args) &gt; 2 </span><span class="cov8" title="1">{
+                return utils.ErrInvalidArgs
+        }</span>
+        <span class="cov8" title="1">var pass string
+        if len(args) == 2 </span><span class="cov8" title="1">{
+                pass = args[1]
+        }</span>
+        <span class="cov8" title="1">user, err := userService.GetUser(c.db, args[0], pass)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">if c.user.Username != "" </span><span class="cov0" title="0">{
+                err := userService.Update(c.db, c.user)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+        <span class="cov8" title="1">(*c.user).ID = user.ID
+        (*c.user).Username = user.Username
+        (*c.user).Password = user.Password
+        (*c.user).History = user.History
+        (*c.user).HistoryMap = user.HistoryMap
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package logout
+
+import (
+        user "asa/shell/internal/service"
+        "asa/shell/utils"
+        "io"
+
+        "gorm.io/gorm"
+)
+
+type LogoutCommand struct {
+        db   *gorm.DB
+        user *user.User
+}
+
+func NewLogoutCommand(db *gorm.DB, user *user.User) *LogoutCommand <span class="cov8" title="1">{
+        return &amp;LogoutCommand{
+                db:   db,
+                user: user,
+        }
+}</span>
+
+func (c *LogoutCommand) Name() string <span class="cov8" title="1">{
+        return "logout"
+}</span>
+
+func (c *LogoutCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        if len(args) &gt; 0 </span><span class="cov8" title="1">{
+                return utils.ErrInvalidArgs
+        }</span>
+
+        <span class="cov8" title="1">err := user.Update(c.db, c.user)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">(*c.user).ID = 0
+        (*c.user).Username = ""
+        (*c.user).Password = ""
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package ls
+
+import (
+        "asa/shell/utils"
+        "fmt"
+        "io"
+        "io/fs"
+        "os"
+        "strings"
+        "time"
+)
+
+// LSCommand implements the 'ls' built-in command
+type LSCommand struct {
+        showAll    bool
+        longFormat bool
+}
+
+// NewLSCommand creates a new ls command
+func NewLSCommand() *LSCommand <span class="cov8" title="1">{
+        return &amp;LSCommand{}
+}</span>
+
+// Name returns the name of the command
+func (c *LSCommand) Name() string <span class="cov0" title="0">{
+        return "ls"
+}</span>
+
+// Execute handles the ls command execution
+func (c *LSCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
+        // Parse arguments and options
+        dirPath, err := c.parseArgs(args)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        // If no directory specified, use current directory
+        <span class="cov8" title="1">if dirPath == "" </span><span class="cov8" title="1">{
+                dirPath = "."
+        }</span>
+
+        <span class="cov8" title="1">return c.listDirectory(dirPath, stdout)</span>
+}
+
+// parseArgs processes command line arguments and returns the target directory
+func (c *LSCommand) parseArgs(args []string) (string, error) <span class="cov8" title="1">{
+        var dirPath string
+
+        for _, arg := range args </span><span class="cov8" title="1">{
+                if strings.HasPrefix(arg, "-") </span><span class="cov8" title="1">{
+                        // Process options
+                        for _, opt := range arg[1:] </span><span class="cov8" title="1">{
+                                switch opt </span>{
+                                case 'a':<span class="cov8" title="1">
+                                        c.showAll = true</span>
+                                case 'l':<span class="cov8" title="1">
+                                        c.longFormat = true</span>
+                                default:<span class="cov8" title="1">
+                                        return "", fmt.Errorf("invalid option: %c", opt)</span>
+                                }
+                        }
+                } else<span class="cov8" title="1"> {
+                        // Process directory path
+                        if dirPath != "" </span><span class="cov8" title="1">{
+                                return "", utils.ErrTooManyArgs
+                        }</span>
+                        <span class="cov8" title="1">dirPath = arg</span>
+                }
+        }
+
+        <span class="cov8" title="1">return dirPath, nil</span>
+}
+
+// listDirectory lists the contents of the specified directory
+func (c *LSCommand) listDirectory(dirPath string, stdout io.Writer) error <span class="cov8" title="1">{
+        entries, err := os.ReadDir(dirPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("cannot open directory %s: %v", dirPath, err)
+        }</span>
+
+        // Sort entries (optional, as ReadDir returns sorted entries by default)
+        <span class="cov8" title="1">for _, entry := range entries </span><span class="cov8" title="1">{
+                // Skip hidden files unless -a flag is set
+                if !c.showAll &amp;&amp; strings.HasPrefix(entry.Name(), ".") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">if c.longFormat </span><span class="cov8" title="1">{
+                        if err := c.printLongFormat(entry, stdout); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+                } else<span class="cov8" title="1"> {
+                        fmt.Fprintln(stdout, entry.Name())
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// printLongFormat prints detailed file information
+func (c *LSCommand) printLongFormat(entry fs.DirEntry, stdout io.Writer) error <span class="cov8" title="1">{
+        info, err := entry.Info()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("error getting info for %s: %v", entry.Name(), err)
+        }</span>
+
+        // Format: permissions size modified_time name
+        <span class="cov8" title="1">mode := info.Mode().String()
+        size := info.Size()
+        modTime := info.ModTime().Format(time.RFC3339[:19]) // Use shorter time format
+        name := entry.Name()
+        fmt.Fprintf(stdout, "%s %8d %s %s\n", mode, size, modTime, name)
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package pwd
+
+import (
+        "asa/shell/utils"
         "fmt"
         "io"
         "os"
@@ -314,25 +795,16 @@ func (c *PwdCommand) Execute(args []string, stdout io.Writer) error <span class=
 }
 
 func (c *PwdCommand) getCurrentDirectory() (string, error) <span class="cov8" title="1">{
-        // Try different methods to get the current directory
 
-        // Try to resolve using filepath operations --&gt; cross-compile
         if pwd, err := filepath.Abs("."); pwd != "" &amp;&amp; err == nil </span><span class="cov8" title="1">{
-                if isValidDirectory(pwd) </span><span class="cov8" title="1">{
+                if utils.IsValidDirectory(pwd) </span><span class="cov8" title="1">{
                         return filepath.Clean(pwd), nil
                 }</span>
         }
-        // Try PWD environment variable first
-        <span class="cov0" title="0">if pwd := os.Getenv("PWD"); pwd != "" </span><span class="cov0" title="0">{
-                if isValidDirectory(pwd) </span><span class="cov0" title="0">{
-                        return filepath.Clean(pwd), nil
-                }</span>
-        }
-
         // Try /proc/self/cwd on Linux
         <span class="cov0" title="0">if runtime.GOOS == "linux" </span><span class="cov0" title="0">{
                 if pwd, err := os.Readlink("/proc/self/cwd"); err == nil </span><span class="cov0" title="0">{
-                        if isValidDirectory(pwd) </span><span class="cov0" title="0">{
+                        if utils.IsValidDirectory(pwd) </span><span class="cov0" title="0">{
                                 return filepath.Clean(pwd), nil
                         }</span>
                 }
@@ -340,34 +812,20 @@ func (c *PwdCommand) getCurrentDirectory() (string, error) <span class="cov8" ti
         <span class="cov0" title="0">return "", nil</span>
 }
 
-func isValidDirectory(path string) bool <span class="cov8" title="1">{
-        info, err := os.Stat(path)
-        if err != nil </span><span class="cov0" title="0">{
-                return false
-        }</span>
-        <span class="cov8" title="1">return info.IsDir()</span>
-}
-
-func (c *PwdCommand) Name() string <span class="cov0" title="0">{
+func (c *PwdCommand) Name() string <span class="cov8" title="1">{
         return "pwd"
 }</span>
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package command
+		<pre class="file" id="file12" style="display: none">package typecmd
 
 import (
-        "errors"
+        "asa/shell/utils"
         "fmt"
         "io"
         "os"
         "path/filepath"
         "strings"
-)
-
-var (
-        ErrCommandNotFound      = errors.New("command not found")
-        ErrMissingCommandName   = errors.New("type: missing command name")
-        ErrEnvironmentVarNotSet = errors.New("PATH environment variable is not set")
 )
 
 type TypeCommand struct {
@@ -386,13 +844,13 @@ func NewTypeCommand(builtins []string) *TypeCommand <span class="cov8" title="1"
         }</span>
 }
 
-func (c *TypeCommand) Name() string <span class="cov8" title="1">{
+func (c *TypeCommand) Name() string <span class="cov0" title="0">{
         return "type"
 }</span>
 
 func (c *TypeCommand) Execute(args []string, stdout io.Writer) error <span class="cov8" title="1">{
         if len(args) == 0 </span><span class="cov8" title="1">{
-                return ErrMissingCommandName
+                return utils.ErrMissingCommandName
         }</span>
         <span class="cov8" title="1">for _, cmd := range args </span><span class="cov8" title="1">{
                 result, err := c.findCommand(cmd)
@@ -408,14 +866,13 @@ func (c *TypeCommand) Execute(args []string, stdout io.Writer) error <span class
 func (c *TypeCommand) findCommand(cmd string) (string, error) <span class="cov8" title="1">{
         // Check if it's a built-in command
         if c.builtins[cmd] </span><span class="cov8" title="1">{
-                fmt.Printf("%s is a shell builtin\n", cmd)
-                return "", nil
+                return fmt.Sprintf("%s is a shell builtin", cmd), nil
         }</span>
 
         // If not built-in, search in PATH
         <span class="cov8" title="1">path := os.Getenv("PATH")
-        if path == "" </span><span class="cov0" title="0">{
-                return "", ErrEnvironmentVarNotSet
+        if path == "" </span><span class="cov8" title="1">{
+                return "", utils.ErrEnvironmentVarNotSet
         }</span>
 
         // Search in each directory in PATH
@@ -426,12 +883,586 @@ func (c *TypeCommand) findCommand(cmd string) (string, error) <span class="cov8"
                         // Check if the file is executable
                         if fileInfo.Mode()&amp;0111 != 0 </span><span class="cov8" title="1">{
 
-                                return fmt.Sprintf("%s is %s\n", cmd, fullPath), nil
+                                return fmt.Sprintf("%s is %s", cmd, fullPath), nil
                         }</span>
                 }
         }
 
-        <span class="cov8" title="1">return "", ErrCommandNotFound</span>
+        <span class="cov8" title="1">return "", utils.ErrCommandNotFound</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package database
+
+import (
+        "fmt"
+
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+        "gorm.io/gorm/logger"
+)
+
+const (
+        dbHost = "localhost"
+        dbPort = "5432"
+        dbName = "postgres"
+        dbUser = "postgres"
+        dbPass = "postgres"
+)
+
+var db *gorm.DB
+
+func init() <span class="cov8" title="1">{
+        dsn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
+                dbHost, dbPort, dbName, dbUser, dbPass)
+
+        sesssion, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+        if err != nil </span><span class="cov0" title="0">{
+                err = fmt.Errorf("unable to connect to database: %w", err)
+                panic(err)</span>
+        }
+
+        <span class="cov8" title="1">db = sesssion</span>
+
+}
+
+func GetDB() *gorm.DB <span class="cov8" title="1">{
+        return db
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package redirection
+
+import (
+        "fmt"
+        "os"
+)
+
+type RedirectionType int
+
+var (
+        ErrMissingFileForRedirection = fmt.Errorf("missing file for redirection")
+)
+
+const (
+        NoRedirection  RedirectionType = iota
+        OutputRedirect                 // &gt;
+        OutputAppend                   // &gt;&gt;
+        ErrorRedirect                  // 2&gt;
+        ErrorAppend                    // 2&gt;&gt;
+)
+
+type Redirection struct {
+        Type RedirectionType
+        File string
+}
+
+func ParseRedirection(args []string) ([]string, *Redirection, error) <span class="cov8" title="1">{
+        if len(args) == 0 </span><span class="cov0" title="0">{
+                return args, nil, nil
+        }</span>
+        // for _, initQuote := range initialQuotes {
+        //         for i := 0; i &lt; len(initQuote); i++ {
+        //                 if string(initQuote[i]) == "&gt;" {
+        //                         return args, nil, nil
+        //                 }
+        //         }
+        // }
+        <span class="cov8" title="1">for i, arg := range args </span><span class="cov8" title="1">{
+                switch </span>{
+                case arg == "&gt;":<span class="cov8" title="1">
+                        if i+1 &gt;= len(args) </span><span class="cov8" title="1">{
+                                return nil, nil, ErrMissingFileForRedirection
+                        }</span>
+                        <span class="cov8" title="1">if i == 0 </span><span class="cov8" title="1">{
+                                if len(args) &lt; 4 </span><span class="cov8" title="1">{
+                                        return args, nil, ErrMissingFileForRedirection
+                                }</span>
+                                <span class="cov8" title="1">return args[3:], &amp;Redirection{
+                                        Type: OutputRedirect,
+                                        File: args[1],
+                                }, nil</span>
+                        }
+                        <span class="cov8" title="1">return args[:i], &amp;Redirection{
+                                Type: OutputRedirect,
+                                File: args[i+1],
+                        }, nil</span>
+
+                case arg == "&gt;&gt;":<span class="cov8" title="1">
+                        if i+1 &gt;= len(args) </span><span class="cov8" title="1">{
+                                return nil, nil, ErrMissingFileForRedirection
+                        }</span>
+                        <span class="cov8" title="1">if i == 0 </span><span class="cov8" title="1">{
+                                if len(args) &lt; 4 </span><span class="cov0" title="0">{
+                                        return args, nil, ErrMissingFileForRedirection
+                                }</span>
+                                <span class="cov8" title="1">return args[3:], &amp;Redirection{
+                                        Type: OutputAppend,
+                                        File: args[1],
+                                }, nil</span>
+                        }
+                        <span class="cov8" title="1">return args[:i], &amp;Redirection{
+                                Type: OutputAppend,
+                                File: args[i+1],
+                        }, nil</span>
+
+                case arg == "2&gt;":<span class="cov8" title="1">
+                        if i+1 &gt;= len(args) </span><span class="cov8" title="1">{
+                                return nil, nil, ErrMissingFileForRedirection
+                        }</span>
+                        <span class="cov8" title="1">if i == 0 </span><span class="cov8" title="1">{
+                                if len(args) &lt; 4 </span><span class="cov0" title="0">{
+                                        return args, nil, ErrMissingFileForRedirection
+                                }</span>
+                                <span class="cov8" title="1">return args[3:], &amp;Redirection{
+                                        Type: ErrorRedirect,
+                                        File: args[1],
+                                }, nil</span>
+                        }
+                        <span class="cov8" title="1">return args[:i], &amp;Redirection{
+                                Type: ErrorRedirect,
+                                File: args[i+1],
+                        }, nil</span>
+
+                case arg == "2&gt;&gt;":<span class="cov8" title="1">
+                        if i+1 &gt;= len(args) </span><span class="cov8" title="1">{
+                                return nil, nil, ErrMissingFileForRedirection
+                        }</span>
+                        <span class="cov8" title="1">if i == 0 </span><span class="cov8" title="1">{
+                                if len(args) &lt; 4 </span><span class="cov0" title="0">{
+                                        return args, nil, ErrMissingFileForRedirection
+                                }</span>
+                                <span class="cov8" title="1">return args[3:], &amp;Redirection{
+                                        Type: ErrorAppend,
+                                        File: args[1],
+                                }, nil</span>
+                        }
+                        <span class="cov8" title="1">return args[:i], &amp;Redirection{
+                                Type: ErrorAppend,
+                                File: args[i+1],
+                        }, nil</span>
+                }
+        }
+
+        <span class="cov8" title="1">return args, nil, nil</span>
+}
+
+func SetupRedirection(redir *Redirection) (*os.File, error) <span class="cov8" title="1">{
+        if redir == nil </span><span class="cov8" title="1">{
+                return nil, nil
+        }</span>
+
+        <span class="cov8" title="1">flags := os.O_WRONLY | os.O_CREATE
+        if redir.Type == OutputAppend || redir.Type == ErrorAppend </span><span class="cov8" title="1">{
+                flags |= os.O_APPEND
+        }</span> else<span class="cov8" title="1"> {
+                flags |= os.O_TRUNC
+        }</span>
+        <span class="cov8" title="1">file, err := os.OpenFile(redir.File, flags, 0644)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to open redirection file: %v", err)
+        }</span>
+        <span class="cov8" title="1">return file, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package user
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+
+        "gorm.io/gorm"
+)
+
+var (
+        ErrNoUserFound      = errors.New("no user found")
+        ErrUserShouldntNill = errors.New("user cannot be nil")
+        ErrUserNameRequired = errors.New("username is required")
+        ErrWrongPassword    = errors.New("wrong password")
+        ErrDuplicateUser    = errors.New("duplicate user exists with this username")
+        ErrUserNotFound     = errors.New("user not found")
+
+)
+
+func RegisterUser(db *gorm.DB, user *User) error <span class="cov8" title="1">{
+        if user == nil </span><span class="cov8" title="1">{
+                return errors.New("user cannot be nil")
+        }</span>
+
+        <span class="cov8" title="1">if err := validate(user); err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("validation error: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">var existingUser User
+        err := db.Where("user_name = ?", user.Username).First(&amp;existingUser).Error
+        if err != nil </span><span class="cov8" title="1">{
+                if !errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        } else<span class="cov8" title="1"> {
+                return ErrDuplicateUser
+        }</span>
+
+        <span class="cov8" title="1">historyMap := map[string]int{}
+
+        historyJSON, err := json.Marshal(historyMap)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to encode history to JSON: %w", err)
+        }</span>
+        <span class="cov8" title="1">user.History = string(historyJSON)
+
+        if err := db.Create(user).Error; err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to insert user into database: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func GetUser(db *gorm.DB, username string, password string) (User, error) <span class="cov8" title="1">{
+        var user User
+        if err := db.Where("user_name = ? ", username).First(&amp;user).Error; err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return user, ErrUserNotFound
+                }</span>
+                <span class="cov0" title="0">return user, err</span>
+        }
+        <span class="cov8" title="1">if password != "" &amp;&amp; user.Password != password </span><span class="cov8" title="1">{
+                return user, ErrWrongPassword
+        }</span>
+
+        <span class="cov8" title="1">var historyMap map[string]int
+        err := json.Unmarshal([]byte(user.History), &amp;historyMap)
+        if err != nil </span><span class="cov0" title="0">{
+                historyMap = map[string]int{}
+                user.HistoryMap = historyMap
+                return user, err
+        }</span>
+        <span class="cov8" title="1">user.HistoryMap = historyMap
+
+        return user, nil</span>
+}
+
+func Update(db *gorm.DB, user *User) (err error) <span class="cov8" title="1">{
+        if user == nil </span><span class="cov8" title="1">{
+                return ErrUserShouldntNill
+        }</span>
+        <span class="cov8" title="1">if err := validate(user); err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("validation error: %w", err)
+        }</span>
+        <span class="cov8" title="1">historyJSON, err := json.Marshal(user.HistoryMap)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to encode history to JSON: %w", err)
+        }</span>
+        <span class="cov8" title="1">user.History = string(historyJSON)
+        err = db.Save(user).Error
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to update user in database: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func validate(user *User) (err error) <span class="cov8" title="1">{
+        if user.Username == "" </span><span class="cov8" title="1">{
+                return ErrUserNameRequired
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file16" style="display: none">package shell
+
+import (
+        "asa/shell/internal/command"
+        "asa/shell/internal/command/adduser"
+        "asa/shell/internal/command/cat"
+        "asa/shell/internal/command/cd"
+        "asa/shell/internal/command/color"
+        "asa/shell/internal/command/echo"
+        "asa/shell/internal/command/exit"
+        "asa/shell/internal/command/help"
+        "asa/shell/internal/command/history"
+        "asa/shell/internal/command/login"
+        "asa/shell/internal/command/logout"
+        "asa/shell/internal/command/ls"
+        "asa/shell/internal/command/pwd"
+        typecmd "asa/shell/internal/command/type"
+        db "asa/shell/internal/database"
+        "asa/shell/internal/redirection"
+        user "asa/shell/internal/service"
+        "asa/shell/utils"
+        "bufio"
+        "bytes"
+        "errors"
+        "fmt"
+        "io"
+        "os"
+        "os/exec"
+        "strings"
+
+        "gorm.io/gorm"
+)
+
+var (
+        ErrCommandNotSupported = errors.New("command not found")
+        ErrNotValidDirectory   = errors.New("current directory is not valid")
+)
+
+type Shell struct {
+        reader   *bufio.Reader
+        user     user.User
+        database *gorm.DB
+        commands map[string]command.Command
+        history  map[string]int
+        rootDir  string
+}
+
+type std struct {
+        std          *os.File
+        isRedirected bool
+}
+type redirect struct {
+        stdout *std
+        stderr *std
+        redirType redirection.RedirectionType
+}
+
+func New() *Shell <span class="cov8" title="1">{
+        rootDir, err := utils.CurrentPwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return &amp;Shell{}
+        }</span>
+        <span class="cov8" title="1">sh := &amp;Shell{
+                user:     user.User{Username: ""},
+                database: db.GetDB(),
+                reader:   bufio.NewReader(os.Stdin),
+                commands: make(map[string]command.Command),
+                history:  make(map[string]int),
+                rootDir:  rootDir,
+        }
+        exitCmd := exit.NewExitCommand(sh.database, &amp;sh.user)
+        sh.registerCommand(exitCmd)
+
+        echoCmd := echo.NewEchoCommand()
+        sh.registerCommand(echoCmd)
+
+        catCmd := cat.NewCatCommand()
+        sh.registerCommand(catCmd)
+
+        pwdCmd := pwd.NewPwdCommand()
+        sh.registerCommand(pwdCmd)
+
+        cdCmd := cd.NewCDCommand(sh.rootDir)
+        sh.registerCommand(cdCmd)
+
+        lsCmd := ls.NewLSCommand()
+        sh.commands[lsCmd.Name()] = lsCmd
+
+        colorCmd := color.NewColorCommand()
+        sh.commands[colorCmd.Name()] = colorCmd
+
+        loginCmd := login.NewLoginCommand(sh.database, &amp;sh.user)
+        sh.commands[loginCmd.Name()] = loginCmd
+
+        adduserCmd := adduser.NewAddUserCommand(sh.database, &amp;sh.user)
+        sh.commands[adduserCmd.Name()] = adduserCmd
+
+        logoutCmd := logout.NewLogoutCommand(sh.database, &amp;sh.user)
+        sh.commands[logoutCmd.Name()] = logoutCmd
+
+        historyCmd := history.NewHistoryCommand(&amp;sh.history, &amp;sh.user, sh.database)
+        sh.commands[historyCmd.Name()] = historyCmd
+
+        helpCmd := help.NewHelpCommand()
+        sh.commands[helpCmd.Name()] = helpCmd
+
+        shellBuiltins := []string{}
+        for cmd := range sh.commands </span><span class="cov8" title="1">{
+                shellBuiltins = append(shellBuiltins, cmd)
+        }</span>
+        <span class="cov8" title="1">typeCmd := typecmd.NewTypeCommand(shellBuiltins)
+        sh.registerCommand(typeCmd)
+
+        stdout := &amp;bytes.Buffer{}
+        sh.commands["pwd"].Execute([]string{}, stdout)
+        sh.rootDir = stdout.String()
+
+        // if err := utils.ClearAndFillHistoryWithMockData(sh.database); err != nil {
+        //         log.Fatalf("Error clearing and filling history: %v", err)
+        // }
+        return sh</span>
+}
+
+func (s *Shell) registerCommand(cmd command.Command) <span class="cov8" title="1">{
+        s.commands[cmd.Name()] = cmd
+}</span>
+
+func (s *Shell) Start() error <span class="cov0" title="0">{
+        for </span><span class="cov0" title="0">{
+                if err := s.printPrompt(); err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+                <span class="cov0" title="0">input, err := s.readInput()
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+                <span class="cov0" title="0">if input == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">if stderr, err := s.executeCommand(input); err != nil </span><span class="cov0" title="0">{
+                        if stderr.isRedirected </span><span class="cov0" title="0">{
+                                defer stderr.std.Close()
+                        }</span>
+                        <span class="cov0" title="0">cmdError := fmt.Sprintf("%s: %v\n", input, err)
+                        if utils.IsColor() </span><span class="cov0" title="0">{
+                                cmdError = utils.ColorText(cmdError, utils.TextRed)
+                        }</span>
+                        <span class="cov0" title="0">fmt.Fprintf(stderr.std, "%s", cmdError)
+                        if err == ErrCommandNotSupported </span><span class="cov0" title="0">{
+                                fmt.Println()
+                                fmt.Fprintln(stderr.std, "List of supported builtin commands are as followings: ")
+                                for key := range s.commands </span><span class="cov0" title="0">{
+                                        fmt.Fprintln(stderr.std, key)
+                                }</span>
+                        }
+                }
+        }
+}
+
+// printPrompt displays the shell prompt
+func (s *Shell) printPrompt() error <span class="cov0" title="0">{
+        currentDir, err := utils.CurrentPwd()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">addr := utils.HandleAdress(s.rootDir, currentDir)
+        user := s.user.Username
+        if utils.IsColor() </span><span class="cov0" title="0">{
+                addr = utils.ColorText(addr, utils.TextBlue)
+                user = utils.ColorText(s.user.Username, utils.TextGreen)
+        }</span>
+        <span class="cov0" title="0">if s.user.Username != "" </span><span class="cov0" title="0">{
+                _, err = fmt.Fprintf(os.Stdout, "%s:%s$ ", user, addr)
+        }</span> else<span class="cov0" title="0"> {
+                _, err = fmt.Fprintf(os.Stdout, "%s$ ", addr)
+        }</span>
+        <span class="cov0" title="0">return err</span>
+}
+
+func (s *Shell) readInput() (string, error) <span class="cov8" title="1">{
+        input, err := s.reader.ReadString('\n')
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">return strings.TrimSpace(input), nil</span>
+}
+
+func (s *Shell) executeCommand(input string) (*std, error) <span class="cov8" title="1">{
+        cmd, args, redirects, err := s.parseCommand(input)
+        if cmd != "history" </span><span class="cov8" title="1">{
+                if s.user.Username != "" </span><span class="cov0" title="0">{
+                        s.user.HistoryMap[input]++
+                        // err := user.Update(s.database, &amp;s.user) // too insufficient but most reliable
+                }</span> else<span class="cov8" title="1"> {
+                        s.history[input]++
+                }</span>
+        }
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return redirects.stderr, err
+        }</span>
+
+        <span class="cov8" title="1">if redirects.stdout.isRedirected </span><span class="cov0" title="0">{
+
+                defer redirects.stdout.std.Close()
+        }</span>
+
+        <span class="cov8" title="1">if command, exists := s.commands[cmd]; exists </span><span class="cov8" title="1">{
+                err := command.Execute(args, redirects.stdout.std)
+                if err != nil </span><span class="cov0" title="0">{
+                        return redirects.stderr, err
+                }</span>
+                <span class="cov8" title="1">return redirects.stderr, nil</span>
+        }
+
+        // linux builtin command not implemented
+        <span class="cov8" title="1">if _, isExist := utils.LinuxBuiltins[cmd]; isExist </span><span class="cov0" title="0">{
+                return redirects.stderr, ErrCommandNotSupported
+        }</span>
+
+        <span class="cov8" title="1">if err := s.executeSystemCommand(cmd, args, redirects.stdout.std, redirects.stderr.std); err != nil </span><span class="cov8" title="1">{
+                return redirects.stderr, ErrCommandNotSupported
+        }</span>
+
+        <span class="cov8" title="1">return redirects.stderr, nil</span>
+}
+
+func (s *Shell) executeSystemCommand(name string, args []string, stdout io.Writer, stderr io.Writer) error <span class="cov8" title="1">{
+        execPath, err := utils.FindCommand(name)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">if utils.HasPrefix(execPath, "$builtin") </span><span class="cov0" title="0">{
+                execPath = strings.Split(execPath, ":")[1]
+        }</span>
+
+        <span class="cov8" title="1">cmd := exec.Command(execPath, args...)
+
+        cmd.Stdout = stdout
+        cmd.Stderr = stderr
+
+        err = cmd.Run()
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to execute %s: %v", name, err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *Shell) parseCommand(input string) (string, []string, *redirect, error) <span class="cov8" title="1">{
+        // var quotes []string
+        // var quotes1 []string
+        redirects := &amp;redirect{stdout: &amp;std{os.Stdout, false}, stderr: &amp;std{os.Stderr, false}}
+        parsedArg, err1 := utils.ParseArgs(input)
+        if err1 != nil </span><span class="cov0" title="0">{
+                return "", nil, redirects, nil
+        }</span>
+        // quotes1, _ = utils.ExtractQuotes(input)
+        // quotes, err1 = utils.ExtractQuotes(parsedArg)
+        // fields := utils.Seperate(parsedArg, quotes)
+        <span class="cov8" title="1">if len(parsedArg) == 0 </span><span class="cov8" title="1">{
+                return "", nil, redirects, nil
+        }</span>
+        // Parse redirection
+        <span class="cov8" title="1">args, redir, err := redirection.ParseRedirection(parsedArg)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", nil, redirects, err
+        }</span>
+        // Setup redirection if needed
+        <span class="cov8" title="1">if redir != nil </span><span class="cov8" title="1">{
+                file, err := redirection.SetupRedirection(redir)
+                if err != nil </span><span class="cov0" title="0">{
+                        return "", nil, redirects, err
+                }</span>
+                // Set appropriate output &amp; error
+                <span class="cov8" title="1">switch redir.Type </span>{
+                case redirection.OutputRedirect, redirection.OutputAppend:<span class="cov8" title="1">
+                        redirects.stdout.std = file
+                        redirects.stdout.isRedirected = true</span>
+                case redirection.ErrorRedirect, redirection.ErrorAppend:<span class="cov8" title="1">
+                        redirects.stderr.std = file
+                        redirects.stderr.isRedirected = true</span>
+                }
+                <span class="cov8" title="1">redirects.redirType = redir.Type</span>
+        }
+        // for case : &gt; file3 cat file2
+        <span class="cov8" title="1">if parsedArg[0][0] != '&gt;' </span><span class="cov8" title="1">{
+                return parsedArg[0], args[1:], redirects, err1
+        }</span> else<span class="cov8" title="1"> {
+                return parsedArg[2], args, redirects, err1
+        }</span>
 }
 </pre>
 		

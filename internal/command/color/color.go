@@ -2,8 +2,10 @@ package color
 
 import (
 	"asa/shell/utils"
+	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 // CDCommand implements the 'cd' built-in command
@@ -29,11 +31,12 @@ func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
 	case 0:
 		return utils.ErrNotEnoughArgs
 	case 1:
-		if args[0] == "off" {
-			return c.unSet()
+
+		if strings.ToLower(args[0]) == "off" {
+			return c.unSet(stdout)
 		}
-		if args[0] == "on" {
-			return c.set()
+		if strings.ToLower(args[0]) == "on" {
+			return c.set(stdout)
 		}
 		return utils.ErrUnvalidArg
 	default:
@@ -41,19 +44,21 @@ func (c *ColorCommand) Execute(args []string, stdout io.Writer) error {
 	}
 }
 
-func (c *ColorCommand) unSet() error {
+func (c *ColorCommand) unSet(stdout io.Writer) error {
 
 	if _, ok := os.LookupEnv(c.envVar); !ok {
 		return utils.ErrColorUnset
 	}
 	os.Unsetenv(c.envVar)
+	fmt.Fprintln(stdout, "Color is set off")
 	return nil
 }
-func (c *ColorCommand) set() error {
-
-	err := os.Setenv(c.envVar, "1")
-	if err != nil {
-		return utils.ErrColorWrong
+func (c *ColorCommand) set(stdout io.Writer) error {
+	if _, ok := os.LookupEnv(c.envVar); ok {
+		return utils.ErrColorSet
 	}
+	os.Setenv(c.envVar, "1")
+
+	fmt.Fprintln(stdout, utils.ColorText("Color is set on", utils.TextBlue))
 	return nil
 }

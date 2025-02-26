@@ -61,11 +61,10 @@ func New() *Shell {
 		return &Shell{}
 	}
 
-	err = db.GetDB().AutoMigrate(&user.User{})
-	if err != nil {
-		fmt.Println("Error migrating database:", err)
-	}
-
+	err = db.GetDB().AutoMigrate(&user.User{}) 
+	if err != nil { 
+		fmt.Println("Error migrating database:", err) 
+	} 
 
 	sh := &Shell{
 		user:     user.User{Username: ""},
